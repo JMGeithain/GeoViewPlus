@@ -43,7 +43,7 @@ Die Statusabfrage 258Ch liest DS:[0611h] nach CX. In der geprüften Disassemblie
 
 Im Setup-Pfad bei 10BC0h–10C06h wird zunächst ES aus AX gesetzt. Bei 10BD5h wird BX nach DS:[0613h] geschrieben. Danach wird DS gesichert und 0000:257Eh aufgerufen; aus dem zurückgegebenen DS:SI werden zwei Wörter gelesen und als Far-Pointer bei DS:[05B8h]/DS:[05BAh] abgelegt.
 
-Damit ist DS:[0613h ein Wert, der im DOS-Treiber-Setup-Pfad vor dem Trampolinaufruf gespeichert wird. Seine semantische Bedeutung ist nicht belegt; insbesondere darf daraus nicht geschlossen werden, dass es ein Treiberindex oder eine Dateinummer ist.
+Damit ist DS:[0613h] ein Wert, der im DOS-Treiber-Setup-Pfad vor dem Trampolinaufruf gespeichert wird. Seine semantische Bedeutung ist nicht belegt; insbesondere darf daraus nicht geschlossen werden, dass es ein Treiberindex oder eine Dateinummer ist.
 
 ## 7. Vergleich mit KERNEL.OLD
 
