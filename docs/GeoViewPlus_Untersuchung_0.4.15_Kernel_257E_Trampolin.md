@@ -86,3 +86,9 @@ Der jetzt untersuchte Code zeigt einen Kontrollfluss über AX=6 und 257Eh, gefol
 4. Entsprechenden Bereich in KERNEL.OLD abgleichen.
 
 **Status:** Instruktionswirkungen und Aufrufkontext statisch dokumentiert. Symbolische Funktionsnamen bleiben offen. Keine Laufzeittests und keine Änderungen an GeoWorks-Dateien oder GeoView-Plus-Zeichensatzcode.
+
+---
+
+## Korrekturhinweis – Untersuchung 0.4.16
+
+Die Disassemblierung in diesem Bericht ordnet den Aufruf bei 257Eh falsch zu. Die Bytes `E8 99 70` rufen **961Ah**, nicht 9C1Ah, auf. Außerdem ist 2FD2h nicht die hier beschriebene Stack-Hilfsroutine; der relevante Sicherungsaufruf ist 29D2h, die Wiederherstellung erfolgt über 29E4h. Maßgeblich ist der korrigierende Bericht [Untersuchung 0.4.16](GeoViewPlus_Untersuchung_0.4.16_50_Pruefschritte.md). Die betroffenen Aussagen des ursprünglichen Berichts sind überholt.
