@@ -1,4 +1,4 @@
-# GeoView Plus – Sicherungsstand Zeichensatzuntersuchung 0.4.1–0.4.18
+# GeoView Plus – Sicherungsstand Zeichensatzuntersuchung 0.4.1–0.4.19
 
 Stand: 9. November 2026  
 Projekt: PC/GEOS 1.x / deutsche GeoWorks-1.2-Installation  
@@ -6,7 +6,7 @@ Archivzweig: `backup/geo-0.4.9-investigation`
 
 ## Lokale Gesamtsicherung
 
-Die ZIP-Datei `GeoViewPlus_0.4.1-0.4.18_Gesamtsicherung.zip` wurde als Download in diesem Chat bereitgestellt. Sie enthält die vorherige Gesamtsicherung 0.4.1–0.4.17 sowie den Bericht 0.4.18. Die ZIP-Datei ist eine lokale Chat-Ausgabe und wurde nicht als ZIP-Datei in das GitHub-Repository hochgeladen.
+Die ZIP-Datei `GeoViewPlus_0.4.1-0.4.19_Gesamtsicherung.zip` wurde als Download in diesem Chat bereitgestellt. Sie enthält die vorherige Gesamtsicherung 0.4.1–0.4.17 sowie den Bericht 0.4.19. Die ZIP-Datei ist eine lokale Chat-Ausgabe und wurde nicht als ZIP-Datei in das GitHub-Repository hochgeladen.
 
 ## Untersuchungsübersicht
 
