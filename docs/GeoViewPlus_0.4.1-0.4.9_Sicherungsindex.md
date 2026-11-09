@@ -1,4 +1,4 @@
-# GeoView Plus – Sicherungsstand Zeichensatzuntersuchung 0.4.1–0.4.14
+# GeoView Plus – Sicherungsstand Zeichensatzuntersuchung 0.4.1–0.4.15
 
 Stand: 9. November 2026  
 Projekt: PC/GEOS 1.x / deutsche GeoWorks-1.2-Installation  
@@ -6,7 +6,7 @@ Archivzweig: `backup/geo-0.4.9-investigation`
 
 ## Lokale Gesamtsicherung
 
-Die ZIP-Datei `GeoViewPlus_0.4.1-0.4.14_Gesamtsicherung.zip` wurde als Download in diesem Chat bereitgestellt. Sie enthält die vorherige Gesamtsicherung 0.4.1–0.4.13 sowie den Bericht 0.4.14. Die ZIP-Datei ist eine lokale Chat-Ausgabe und wurde nicht als ZIP-Datei in das GitHub-Repository hochgeladen.
+Die ZIP-Datei `GeoViewPlus_0.4.1-0.4.15_Gesamtsicherung.zip` wurde als Download in diesem Chat bereitgestellt. Sie enthält die vorherige Gesamtsicherung 0.4.1–0.4.14 sowie den Bericht 0.4.15. Die ZIP-Datei ist eine lokale Chat-Ausgabe und wurde nicht als ZIP-Datei in das GitHub-Repository hochgeladen.
 
 ## Untersuchungsübersicht
 
@@ -26,6 +26,7 @@ Die ZIP-Datei `GeoViewPlus_0.4.1-0.4.14_Gesamtsicherung.zip` wurde als Download 
 | 0.4.12 | Kernel-Datensegment 0E34h/0E35h und gespeicherte Segmentwerte |
 | 0.4.13 | Zugriffe auf Kernel-Datenfelder im kopierten Segment |
 | 0.4.14 | DOS-Treiberauswahl und Far-Pointer-Aufbau im Kernel |
+| 0.4.15 | Routine 257Eh: Registerübergabe und Trampolinstruktur |
 
 ## Regressionstest
 
