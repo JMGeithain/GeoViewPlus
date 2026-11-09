@@ -1,4 +1,4 @@
-# GeoView Plus – Sicherungsstand Zeichensatzuntersuchung 0.4.1–0.4.10
+# GeoView Plus – Sicherungsstand Zeichensatzuntersuchung 0.4.1–0.4.11
 
 Stand: 9. November 2026  
 Projekt: PC/GEOS 1.x / deutsche GeoWorks-1.2-Installation  
@@ -6,15 +6,9 @@ Archivzweig: `backup/geo-0.4.9-investigation`
 
 ## Lokale Gesamtsicherung
 
-Das vollständige Arbeitsarchiv mit Testprogramm, Regressionstest und den Untersuchungsberichten 0.4.2–0.4.9 wurde als ZIP-Datei für diesen Chat erstellt und bereitgestellt. Es wurde **nicht** in eine dauerhafte ChatGPT-Bibliothek hochgeladen. Download: `GeoViewPlus_0.4.1-0.4.9_Gesamtsicherung.zip`.
+Das Arbeitsarchiv `GeoViewPlus_0.4.1-0.4.9_Gesamtsicherung.zip` wurde als Download in diesem Chat erstellt. Es wurde nicht in eine dauerhafte ChatGPT-Bibliothek hochgeladen. Es enthält die separate Testversion 0.4.1, den Regressionstest, das Testpaket sowie Berichte 0.4.2–0.4.9 und ein SHA-256-Manifest. Die Berichte 0.4.10 und 0.4.11 wurden anschließend separat erstellt.
 
-Das ZIP enthält:
-- separate Testversion `GeoViewPlus_0.4.1_Zeichensatz_Test.py`
-- Regressionstest `GeoViewPlus_0.4.1_Zeichensatz_Regressionstest.py`
-- Testpaket `GeoViewPlus_0.4.1_Zeichensatz_Testpaket.zip`
-- Untersuchungsberichte 0.4.2 bis 0.4.9 und ein SHA-256-Manifest
-
-## Inhaltliche Übersicht
+## Untersuchungsübersicht
 
 | Bericht | Thema |
 |---|---|
@@ -27,7 +21,8 @@ Das ZIP enthält:
 | 0.4.8 | Korrektur der MZ-Headerauswertung |
 | 0.4.9 | Kernel-Ladebild und MZ-Einstiegspunkt |
 | 0.4.9 Zusatz | MZ-Relokationstabellen |
-| 0.4.10 | Auflösung des ersten Kernel-Far-Calls über MZ-Relokation |
+| 0.4.10 | MZ-relokierter Kernel-Far-Call |
+| 0.4.11 | Kernel-Bootstrap, Segmentkopie und dynamischer zweiter Far-Call |
 
 ## Regressionstest
 
@@ -38,10 +33,11 @@ Die lokale Ausführung von `GeoViewPlus_0.4.1_Zeichensatz_Regressionstest.py` er
 - Die Zuordnungen für `0xCE`, `0xCF`, `0xD0` und `0xD1` sind weiterhin ungeklärt.
 - Der Localization-Schlüssel `quotes` ist belegt; sein konkreter Einfluss auf Dateinamendarstellung ist nicht nachgewiesen.
 - Die `LOCAL.GEO`-Aufrufoperanden sind nachgewiesen; ihre symbolische Bedeutung bleibt offen.
-- Der MZ-Einstiegspunkt `0000:02B1` ist verifiziert. Der erste Far-Call ist durch den Relokationseintrag als interner Kernel-Segmentaufruf belegt.
-- Keine GeoWorks-Originaldatei wurde verändert.
-- Die Testversion ist kein Release und nicht endgültig freigegeben.
+- Der MZ-Einstiegspunkt `0000:02B1` ist verifiziert.
+- Der erste MZ-Far-Call führt in einen internen Bootstrap-Code, der `0x1CE0` Bytes in ein berechnetes Segment kopiert. Anschließend wird der Segmentoperand des zweiten Far-Calls dynamisch angepasst.
+- Die symbolischen Namen der anschließenden Kernelroutinen sind noch nicht bestimmt.
+- Keine GeoWorks-Originaldatei wurde verändert; die Testversion ist kein Release.
 
 ## GitHub-Sicherungsstand
 
-Im Branch `backup/geo-0.4.9-investigation` liegen die Sicherungsübersicht, der Bericht `GeoViewPlus_Untersuchung_0.4.9_Kernel_MZ_Relokationen.md` und der neue Bericht `GeoViewPlus_Untersuchung_0.4.10_Kernel_FarCall.md`. Die übrigen Einzeldateien des ZIP-Archivs sind noch nicht vollständig als separate Dateien im Repository abgelegt. Der Branch `main` wurde nicht verändert.
+Im Branch `backup/geo-0.4.9-investigation` liegen der Index sowie die Berichte `GeoViewPlus_Untersuchung_0.4.9_Kernel_MZ_Relokationen.md`, `GeoViewPlus_Untersuchung_0.4.10_Kernel_FarCall.md` und `GeoViewPlus_Untersuchung_0.4.11_Kernel_Bootstrap.md`. Die übrigen Einzeldateien des ZIP-Archivs sind noch nicht vollständig als separate Dateien im Repository abgelegt. Der Branch `main` wurde nicht verändert.
