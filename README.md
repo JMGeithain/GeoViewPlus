@@ -52,3 +52,5 @@ Die neue Ressourcenanalyse bleibt strikt bei GeoWorks / PC/GEOS 1.x. GEOS-2.x-Ko
 Dieses Repository enthält derzeit Projektübersicht und Dokumentation sowie ältere Build-Historie. Die Anwendung `GeoViewPlus.py` und die vollständigen Laufzeitressourcen des getesteten 0.4.4.1-Gesamtpakets sind mit diesem Commit **noch nicht vollständig in das Repository gespiegelt**. Die Dokumentationsaktualisierung darf nicht mit einer vollständigen Quellcodeveröffentlichung verwechselt werden.
 
 Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 153 – LMEM-Handle- und Offset-Analyse der Ressourcen 5–10](docs/GeoViewPlus_Untersuchung_153_LMEM_Handle_Offset_Analyse.md).
+
+Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 154 – Tabellenziele in den Ressourcen 3 und 4](docs/GeoViewPlus_Untersuchung_154_Ressourcen3_4_Tabellenziele.md).
