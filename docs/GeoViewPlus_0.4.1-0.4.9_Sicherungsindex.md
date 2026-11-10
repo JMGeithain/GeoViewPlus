@@ -1,4 +1,4 @@
-# GeoView Plus – Sicherungsstand Zeichensatzuntersuchung 0.4.1–0.4.19
+# GeoView Plus – Sicherungsstand Zeichensatzuntersuchung 0.4.1–0.4.21
 
 Stand: 10. November 2026  
 Projekt: PC/GEOS 1.x / deutsche GeoWorks-1.2-Installation  
@@ -52,4 +52,4 @@ Die im vorherigen Arbeitsstand dokumentierte lokale Ausführung von `GeoViewPlus
 
 ## GitHub-Sicherungsstand
 
-Im Branch `backup/geo-0.4.9-investigation` liegen der Index sowie die Berichte 0.4.9 (MZ-Relokationen) und 0.4.10 bis 0.4.14. Die übrigen Dateien des ZIP-Archivs sind noch nicht vollständig als separate Dateien im Repository abgelegt. Der Branch `main` wurde durch diese Sicherungsarbeiten nicht verändert.
+Im Branch `backup/geo-0.4.9-investigation` liegen der Index sowie die Berichte 0.4.9 (MZ-Relokationen) und 0.4.10 bis 0.4.14. Die Berichte 0.4.19 bis 0.4.21 sind als separate Markdown-Dateien im Repository abgelegt. Die übrigen Dateien des ZIP-Archivs sind noch nicht vollständig als separate Dateien im Repository abgelegt. Der Branch `main` wurde durch diese Sicherungsarbeiten nicht verändert.
