@@ -19,6 +19,8 @@ Fortsetzung der TOKEN.DB-Analyse: [Untersuchung 129 – Blockgruppen 0x2222 und 
 
 Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 149 – Relokationen und Ressourcenvergleich in BOUNCE.GEO und BCOLTEST.GEO](docs/GeoViewPlus_Untersuchung_149_Relokationen_Ressourcenvergleich.md).
 
+Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 150 – LMEM-Kopf- und Chunk-Tabellenvergleich](docs/GeoViewPlus_Untersuchung_150_LMEM_Kopf_Chunk_Tabellenvergleich.md).
+
 ## Versionsschritte
 
 - **0.4.1:** Drittanbieter-Klassifizierung.
