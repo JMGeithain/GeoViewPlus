@@ -10,7 +10,7 @@ Untersucht wurden die 92 Directory-Einträge mit `userID = 0x2222` und die 178 E
 - 358 Directory-Einträge zu je 12 Bytes ab `0xCF420`.
 - Rohdaten wurden ausschließlich lesend aus dem ZIP analysiert; Originaldatei wurde nicht verändert.
 
-## Wichtige Korrektur zur Feldzuordnung
+## Directory-Eintragsformat
 
 Die 12-Byte-Einträge sind in dieser Reihenfolge zu lesen:
 
@@ -22,18 +22,25 @@ Die 12-Byte-Einträge sind in dieser Reihenfolge zu lesen:
 | +6 | Blockgröße (WORD) |
 | +8 | Dateioffset (DWORD) |
 
-Die Einträge sind fortlaufend im Directory abgelegt. Die zuvor verwendete Bezeichnung der Directory-Position als „Handle“ war nicht ausreichend belegt. Dieser Bericht verwendet deshalb `Directory-Index` und `Directory-Dateioffset` und vermeidet daraus abgeleitete Handle-Nummern.
+Die Einträge sind fortlaufend im Directory abgelegt. Die frühere Bezeichnung der Directory-Position als „Handle“ war nicht ausreichend belegt. Dieser Bericht verwendet deshalb Directory-Index und Directory-Dateioffset und vermeidet daraus abgeleitete Handle-Nummern.
 
-## Verteilung
+## Verteilung und Flags
 
-| User-ID | Anzahl |
-|---|---:|
-| `0x2222` | 92 |
-| `0x3333` | 178 |
+| User-ID | Anzahl | Flags |
+|---|---:|---|
+| `0x2222` | 92 | alle `0x00FF` |
+| `0x3333` | 178 | alle `0x01FF` |
 
-Für die 0x2222-Gruppe haben 81 Einträge die Größe `0x0130` (304 Bytes). Die übrigen Größen sind: `0x0010` × 1, `0x0230` × 1, `0x0530` × 1, `0x0930` × 1, `0x0130` × 81, `0x0630` × 1, `0x0930` × 1 und `0x0...`.
+Größenverteilung der 0x2222-Gruppe:
+- `0x0010`: 1 Eintrag
+- `0x0130`: 81 Einträge (304 Bytes)
+- `0x0230`: 3 Einträge
+- `0x0530`: 2 Einträge
+- `0x0630`: 2 Einträge
+- `0x0830`: 1 Eintrag
+- `0x0930`: 2 Einträge
 
-Alle 178 Einträge der 0x3333-Gruppe haben Flags `0x01FF`; alle 92 Einträge der 0x2222-Gruppe haben Flags `0x00FF`.
+Damit ergeben sich 92 Einträge. Die 0x3333-Gruppe hat eine deutlich breitere Größenverteilung; die Größen reichen in den untersuchten Einträgen bis `0xDE20` (56.864 Bytes).
 
 ## Strukturbeobachtungen 0x2222
 
@@ -46,6 +53,8 @@ Weitere Beispiele:
 - `8C 00 20 26 00 00 0E 01 12 00 14 01 2C 01 0E 01 ...`
 
 Das sind wiederkehrende strukturierte Daten und keine erkennbaren Bitmap-Pixelströme an den Blockanfängen. Eine semantische Benennung als Token-Tabelle, Moniker-Tabelle oder Icon-Verzeichnis ist anhand dieser Bytes allein noch nicht zulässig.
+
+Die 81 gleich großen 0x0130-Blöcke sind ein starker Hinweis auf einen einheitlichen Datensatztyp. Die wiederkehrenden WORD-Sequenzen sollten nach Feldern und Verweisen gruppiert werden.
 
 ## Strukturbeobachtungen 0x3333
 
