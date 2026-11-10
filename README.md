@@ -56,3 +56,5 @@ Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 153 – LMEM-Handle- und Of
 Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 154 – Tabellenziele in den Ressourcen 3 und 4](docs/GeoViewPlus_Untersuchung_154_Ressourcen3_4_Tabellenziele.md).
 
 Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 155 – Textdatensatz-Präfixe und überlappende Tabellenziele](docs/GeoViewPlus_Untersuchung_155_Textdatensatz_Praefixe_und_ueberlappende_Ziele.md).
+
+Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 156 – Längenfeld der Textdatensätze in Ressourcen 3 und 4](docs/GeoViewPlus_Untersuchung_156_Textdatensatz_Laengenfeld.md).
