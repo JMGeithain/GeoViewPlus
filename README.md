@@ -23,6 +23,8 @@ Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 150 – LMEM-Kopf- und Chun
 
 Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 151 – zeitgenössische GeoWorks-Quelle zur LMEM-Verwaltung](docs/GeoViewPlus_Untersuchung_151_GeoWorks_LMEM_Primaerquelle.md).
 
+Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 152 – LMEM-Abgleich und Handle-Dereferenzierung](docs/GeoViewPlus_Untersuchung_152_LMEM_Abgleich_Handle_Dereferenzierung.md).
+
 ## Versionsschritte
 
 - **0.4.1:** Drittanbieter-Klassifizierung.
