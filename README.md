@@ -16,6 +16,9 @@ Technischer Ist-Stand der GEO-Icon-Ermittlung: [Untersuchung 123 – GEO-Icon-Re
 
 Fortsetzung der TOKEN.DB-Analyse: [Untersuchung 129 – Blockgruppen 0x2222 und 0x3333](docs/GeoViewPlus_Untersuchung_129_TOKENDB_Blockgruppen.md) und [Untersuchung 130 – 304-Byte-Datensätze](docs/GeoViewPlus_Untersuchung_130_TOKENDB_304Byte_Datensaetze.md). [Untersuchung 131 – Ausnahmen im 304-Byte-Datensatzfeld](docs/GeoViewPlus_Untersuchung_131_TOKENDB_Ausnahmen.md) und [Untersuchung 132 – WORD-Feldanalyse der 304-Byte-Datensätze](docs/GeoViewPlus_Untersuchung_132_TOKENDB_WORD_Feldanalyse.md) und [Untersuchung 133 – Handlevergleich der 304-Byte-Datensätze](docs/GeoViewPlus_Untersuchung_133_TOKENDB_Handlevergleich.md). [Untersuchung 134 – Vergleich der TOKEN.DB-Zielblöcke](docs/GeoViewPlus_Untersuchung_134_TOKENDB_Zielblockvergleich.md).
 
+
+Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 149 – Relokationen und Ressourcenvergleich in BOUNCE.GEO und BCOLTEST.GEO](docs/GeoViewPlus_Untersuchung_149_Relokationen_Ressourcenvergleich.md).
+
 ## Versionsschritte
 
 - **0.4.1:** Drittanbieter-Klassifizierung.
