@@ -21,6 +21,8 @@ Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 149 – Relokationen und Re
 
 Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 150 – LMEM-Kopf- und Chunk-Tabellenvergleich](docs/GeoViewPlus_Untersuchung_150_LMEM_Kopf_Chunk_Tabellenvergleich.md).
 
+Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 151 – zeitgenössische GeoWorks-Quelle zur LMEM-Verwaltung](docs/GeoViewPlus_Untersuchung_151_GeoWorks_LMEM_Primaerquelle.md).
+
 ## Versionsschritte
 
 - **0.4.1:** Drittanbieter-Klassifizierung.
