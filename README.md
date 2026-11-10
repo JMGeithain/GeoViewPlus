@@ -12,6 +12,8 @@ Die Copyright-Zeile lautet: **Möllerjaner © 2026 Johannes Möller**.
 
 Details und Abnahmeprotokoll: [GeoViewPlus 0.4.4.1 – Windows-Abnahme und Fortschritt](docs/GeoViewPlus_0.4.4.1_Windows-Abnahme.md).
 
+Technischer Ist-Stand der GEO-Icon-Ermittlung: [Untersuchung 123 – GEO-Icon-Resolver](docs/GeoViewPlus_Untersuchung_123_GEO_Icon_Resolver_Iststand.md).
+
 ## Versionsschritte
 
 - **0.4.1:** Drittanbieter-Klassifizierung.
