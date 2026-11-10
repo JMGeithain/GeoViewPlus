@@ -1,33 +1,39 @@
 # GeoViewPlus
 
-Windows-Werkzeug zur Untersuchung von PC/GEOS-Dateien – von GeoWorks 1.* bis FreeGEOS.
+Windows-Werkzeug zur Untersuchung von PC/GEOS-Dateien – mit besonderem Schwerpunkt auf GeoWorks / PC/GEOS 1.x.
 
-## Aktueller Entwicklungsstand
+## Aktueller Arbeitsstand
 
-**Version 0.3 – Farbmoniker-Testbuild**
+**Dokumentierter Anwendungstand: 0.4.4.1 (10.11.2026)**
 
-Der 0.3-Teststand ergänzt die Vorschau von 4-Bit-Farbmonikern um eine aus GeoWorks 1.x `WORLD/DUMP.GEO` rekonstruierte 16-Farben-RGB-Palette. Die Nibble-Reihenfolge (hohes Nibble zuerst) ist im dortigen `mapPixels`-Ausgabepfad dokumentiert.
+Der Hilfe-Dialog wurde im Windows-Programm vom Projektverantwortlichen visuell geprüft. Das JME-Spirallogo wird kompakt angezeigt; die Textumbrüche funktionieren; der Dialog nennt das 25. Geithainer PC/GEOS-Treffen 2026 in Syhra sowie die Projektleitung Johannes Möller und die KI-Unterstützung ChatGPT (OpenAI) und Grok (xAI).
 
-Wichtige Einschränkung: Es ist noch nicht abschließend nachgewiesen, dass jeder Farbmoniker-Untertyp in `TOKEN.DB` dieselbe Palette verwendet. Version 0.3 ist deshalb als Testbuild gekennzeichnet.
+Die Copyright-Zeile lautet: **Möllerjaner © 2026 Johannes Möller**.
+
+Details und Abnahmeprotokoll: [GeoViewPlus 0.4.4.1 – Windows-Abnahme und Fortschritt](docs/GeoViewPlus_0.4.4.1_Windows-Abnahme.md).
+
+## Versionsschritte
+
+- **0.4.1:** Drittanbieter-Klassifizierung.
+- **0.4.2:** Dateiauswahl um `*.DB` erweitert, damit `TOKEN.DB` direkt geöffnet werden kann.
+- **0.4.3:** Projektverantwortung und KI-Unterstützung im Hilfe-Dialog ausgewiesen.
+- **0.4.4:** JME-Spirallogo und Hinweis auf das 25. Geithainer PC/GEOS-Treffen 2026 in Syhra.
+- **0.4.4.1:** Hilfe-Dialog kompakter; Logo 104 × 104 Pixel, Textumbruch und echte Zeilenumbrüche korrigiert.
+
+## Technische nächste Schritte
+
+Die weitere Kernarbeit ist die Rekonstruktion der GeoWorks-1.x-VM-Ressourcenreferenzen. Erst nach Nachweis der Referenzketten werden echtes Programm-Icon und Dokument-Icon semantisch zugeordnet und die Extraktion bzw. der Dokument-Icon-Cache implementiert.
+
+Strukturell gefundene Moniker-Kandidaten sind nicht automatisch die verwendeten Programm- oder Dokument-Icons.
 
 ## Build unter Windows
 
-Voraussetzungen: Python 3.15, Pillow und PyInstaller.
+Das separate Gesamtpaket enthält `make_exe.bat`, das die vorhandene Python-Installation sowie Tkinter, Pillow und PyInstaller prüft und den EXE-Bau startet. Der Nutzer hat einen erfolgreichen Build mit Python 3.15.0 und PyInstaller 6.22.3 gemeldet.
 
-Im entpackten Projektordner `make_exe.bat` ausführen. Die EXE wird unter `dist/GeoViewPlus.exe` erzeugt.
+## Datenintegrität und Versionsgrenze
 
-## Projektstruktur
+Die neue Ressourcenanalyse bleibt strikt bei GeoWorks / PC/GEOS 1.x. GEOS-2.x-Kompatibilität im bestehenden Programm wird als getrennter Zweig behandelt. Originaldateien und `TOKEN.DB` werden nicht verändert und nicht ohne gesonderte Freigabe in das öffentliche Repository übernommen.
 
-- `GeoViewPlus.py` – Anwendung
-- `GeoViewPlus_0.3_Regressionstest.py` – Regressionstests
-- `make_exe.bat` – EXE-Build
-- `icons/` – Anwendungsressourcen
-- `docs/` – Untersuchungsdokumentation
+## Repository-Synchronisation
 
-## Daten und Integrität
-
-Originale GeoWorks-Dateien und `TOKEN.DB` werden nicht verändert und aus Urheberrechts- und Reproduzierbarkeitsgründen nicht mit diesem Repository ausgeliefert. Tests verwenden eine lokal bereitgestellte `TOKEN.DB`.
-
-## Untersuchung 121
-
-Siehe [GeoWorks 1.x: 4-Bit-Farbmoniker, RGB-Zuordnung und Nibble-Reihenfolge](docs/GeoViewPlus_Untersuchung_121_Farbpalette_4Bit.md).
+Dieses Repository enthält derzeit Projektübersicht und Dokumentation sowie ältere Build-Historie. Die Anwendung `GeoViewPlus.py` und die vollständigen Laufzeitressourcen des getesteten 0.4.4.1-Gesamtpakets sind mit diesem Commit **noch nicht vollständig in das Repository gespiegelt**. Die Dokumentationsaktualisierung darf nicht mit einer vollständigen Quellcodeveröffentlichung verwechselt werden.
