@@ -64,3 +64,5 @@ Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 157 – Binäre Tabellenzie
 Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 158 – Bytevergleich binärer Bereiche in BOUNCE.GEO und BCOLTEST.GEO](docs/GeoViewPlus_Untersuchung_158_Binaerbereiche_BOUNCE_BCOLTEST_Vergleich.md).
 
 Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 159 – Feldvergleich der wiederkehrenden binären Struktur in Ressource 3](docs/GeoViewPlus_Untersuchung_159_Binaerstruktur_Feldvergleich.md).
+
+Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 160 – Suche der 12-Byte-Muster in weiteren GEO-Ressourcen](docs/GeoViewPlus_Untersuchung_160_Suche_12Byte_Muster_in_weiteren_Ressourcen.md).
