@@ -14,6 +14,8 @@ Details und Abnahmeprotokoll: [GeoViewPlus 0.4.4.1 – Windows-Abnahme und Forts
 
 Technischer Ist-Stand der GEO-Icon-Ermittlung: [Untersuchung 123 – GEO-Icon-Resolver](docs/GeoViewPlus_Untersuchung_123_GEO_Icon_Resolver_Iststand.md).
 
+Fortsetzung der TOKEN.DB-Analyse: [Untersuchung 129 – Blockgruppen 0x2222 und 0x3333](docs/GeoViewPlus_Untersuchung_129_TOKENDB_Blockgruppen.md) und [Untersuchung 130 – 304-Byte-Datensätze](docs/GeoViewPlus_Untersuchung_130_TOKENDB_304Byte_Datensaetze.md).
+
 ## Versionsschritte
 
 - **0.4.1:** Drittanbieter-Klassifizierung.
