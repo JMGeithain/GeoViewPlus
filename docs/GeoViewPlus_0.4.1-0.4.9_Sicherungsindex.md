@@ -1,6 +1,6 @@
 # GeoView Plus – Sicherungsstand Zeichensatzuntersuchung 0.4.1–0.4.19
 
-Stand: 9. November 2026  
+Stand: 10. November 2026  
 Projekt: PC/GEOS 1.x / deutsche GeoWorks-1.2-Installation  
 Archivzweig: `backup/geo-0.4.9-investigation`
 
@@ -30,6 +30,7 @@ Die ZIP-Datei `GeoViewPlus_0.4.1-0.4.19_Gesamtsicherung.zip` wurde als Download 
 | 0.4.16 | 50 Prüfschritte: Trampolin 257Eh, Segment-Service 961Ah und Vergleich KERNEL.OLD |
 | 0.4.17 | Herkunft von BX und vier Aufrufpfade des Trampolins 257Eh |
 | 0.4.18 | BX-Listenherkunft, Objektlisten und Kernel-Statuswörter |
+| 0.4.20 | Segmentkontext und Korrektur der vermeintlichen Feldschreiber 0609h/0613h |
 | 0.4.19 | Schreibstellen der Kernel-Felder 0607h, 0609h, 060Fh, 0611h und 0613h |
 
 ## Regressionstest
