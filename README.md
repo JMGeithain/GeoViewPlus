@@ -60,3 +60,5 @@ Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 155 – Textdatensatz-Präf
 Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 156 – Längenfeld der Textdatensätze in Ressourcen 3 und 4](docs/GeoViewPlus_Untersuchung_156_Textdatensatz_Laengenfeld.md).
 
 Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 157 – Binäre Tabellenziele in Ressourcen 3 und 4](docs/GeoViewPlus_Untersuchung_157_Binaere_Tabellenziele.md).
+
+Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 158 – Bytevergleich binärer Bereiche in BOUNCE.GEO und BCOLTEST.GEO](docs/GeoViewPlus_Untersuchung_158_Binaerbereiche_BOUNCE_BCOLTEST_Vergleich.md).
