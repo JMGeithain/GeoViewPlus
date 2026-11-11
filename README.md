@@ -82,3 +82,5 @@ Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 166 – Headerkontrolle an 
 Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 167 – Tabellenstruktur in Treiber-Ressource 2](docs/GeoViewPlus_Untersuchung_167_Treiberressource2_Tabellenstruktur.md).
 
 Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 168 – Textlängenfelder und Abschlussbytes in Treiber-Ressource 2](docs/GeoViewPlus_Untersuchung_168_Textlaengen_und_Abschlussbytes.md).
+
+Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 169 – Vergleich von Treiber-Ressource 1 mit Ressource 2](docs/GeoViewPlus_Untersuchung_169_Treiberressource1_Vergleich.md).
