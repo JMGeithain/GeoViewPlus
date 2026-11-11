@@ -68,3 +68,5 @@ Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 159 – Feldvergleich der w
 Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 160 – Suche der 12-Byte-Muster in weiteren GEO-Ressourcen](docs/GeoViewPlus_Untersuchung_160_Suche_12Byte_Muster_in_weiteren_Ressourcen.md).
 
 Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 161 – CC-CC-Muster und binäre Bereiche in allen Ressourcen](docs/GeoViewPlus_Untersuchung_161_CC_CC_Muster_und_Binaerbereiche.md).
+
+Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 162 – Ressourcenenden und mögliche Abschlussbereiche](docs/GeoViewPlus_Untersuchung_162_Ressourcenenden_Abschlussbereiche.md).
