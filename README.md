@@ -74,3 +74,5 @@ Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 162 – Ressourcenenden und
 Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 163 – Abgleich der Ressourcenlänge mit den Headerfeldern +08h und +14h](docs/GeoViewPlus_Untersuchung_163_Ressourcenlaenge_Headerfeld_08_14.md).
 
 Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 164 – Tabellenziele im Verhältnis zum Grenzwert +08h](docs/GeoViewPlus_Untersuchung_164_Tabellenziele_und_Grenzwert_08.md).
+
+Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 165 – Headerfeld +0Ah und Anzahl der Tabelleneinträge](docs/GeoViewPlus_Untersuchung_165_Headerfeld_0A_Tabellenanzahl.md).
