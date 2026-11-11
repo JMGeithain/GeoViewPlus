@@ -76,3 +76,5 @@ Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 163 – Abgleich der Ressou
 Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 164 – Tabellenziele im Verhältnis zum Grenzwert +08h](docs/GeoViewPlus_Untersuchung_164_Tabellenziele_und_Grenzwert_08.md).
 
 Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 165 – Headerfeld +0Ah und Anzahl der Tabelleneinträge](docs/GeoViewPlus_Untersuchung_165_Headerfeld_0A_Tabellenanzahl.md).
+
+Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 166 – Headerkontrolle an weiteren GeoWorks-1.x-Dateien](docs/GeoViewPlus_Untersuchung_166_Externe_GEO_Kontrolle.md).
