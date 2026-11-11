@@ -102,3 +102,6 @@ Fortsetzung der Kernel-Analyse: [Untersuchung 177 – MZ-Relokationswerte und In
 Fortsetzung der Kernel-Analyse: [Untersuchung 178 – Die 50 MOV-immediate-Relokationsstellen im Kontext](docs/GeoViewPlus_Untersuchung_178_MOV_Segmentregister_Verwendung.md).
 
 Fortsetzung der Kernel-Analyse: [Untersuchung 179 – Datenzugriffe nach Laden des Segments 0E34h](docs/GeoViewPlus_Untersuchung_179_Datenzugriffe_Segment_0E34.md).
+
+
+Fortsetzung der Kernel-Analyse: [Untersuchung 180 – Datenfelder 0040h–0046h und 0FE2h–0FFEh](docs/GeoViewPlus_Untersuchung_180_Kernel_Datenfelder_0040_0FFE.md).
