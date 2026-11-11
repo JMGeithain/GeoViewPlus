@@ -94,3 +94,5 @@ Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 173 – Gruppierung der FAR
 Fortsetzung der Kernel-Analyse: [Untersuchung 174 – Aufbau und Grenzen der vorliegenden KERNEL.EXE](docs/GeoViewPlus_Untersuchung_174_KERNEL_EXE_MZ_Analyse.md).
 
 Fortsetzung der Kernel-Analyse: [Untersuchung 175 – Die 276 DOS-MZ-Relokationen der KERNEL.EXE](docs/GeoViewPlus_Untersuchung_175_MZ_Relokationstabelle.md).
+
+Fortsetzung der Kernel-Analyse: [Untersuchung 176 – Kartierung der MZ-Relokationsstellen nach Segment](docs/GeoViewPlus_Untersuchung_176_MZ_Segmentkartierung.md).
