@@ -98,3 +98,5 @@ Fortsetzung der Kernel-Analyse: [Untersuchung 175 – Die 276 DOS-MZ-Relokatione
 Fortsetzung der Kernel-Analyse: [Untersuchung 176 – Kartierung der MZ-Relokationsstellen nach Segment](docs/GeoViewPlus_Untersuchung_176_MZ_Segmentkartierung.md).
 
 Fortsetzung der Kernel-Analyse: [Untersuchung 177 – MZ-Relokationswerte und Instruktionskontexte](docs/GeoViewPlus_Untersuchung_177_MZ_Relokationswerte_Opcodekontexte.md).
+
+Fortsetzung der Kernel-Analyse: [Untersuchung 178 – Die 50 MOV-immediate-Relokationsstellen im Kontext](docs/GeoViewPlus_Untersuchung_178_MOV_Segmentregister_Verwendung.md).
