@@ -105,3 +105,6 @@ Fortsetzung der Kernel-Analyse: [Untersuchung 179 – Datenzugriffe nach Laden d
 
 
 Fortsetzung der Kernel-Analyse: [Untersuchung 180 – Datenfelder 0040h–0046h und 0FE2h–0FFEh](docs/GeoViewPlus_Untersuchung_180_Kernel_Datenfelder_0040_0FFE.md).
+
+
+Fortsetzung der Kernel-Analyse: [Untersuchung 182 – INT-8-Einsprungpunkt und CS-relative Adressierung](docs/GeoViewPlus_Untersuchung_182_INT8_CS_Einsprungpunkt.md).
