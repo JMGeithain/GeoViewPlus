@@ -111,3 +111,6 @@ Fortsetzung der Kernel-Analyse: [Untersuchung 182 – INT-8-Einsprungpunkt und C
 
 
 Fortsetzung der Kernel-Analyse: [Untersuchung 183 – Nachweis des CS-Segments und Auflösung des INT-8-Vektors](docs/GeoViewPlus_Untersuchung_183_Nachweis_CS_Segment_INT8.md).
+
+
+Fortsetzung der Kernel-Analyse: [Untersuchung 184 – Datenfluss der Timer-Ergebnisfelder 1088h, 108Ah und 108Ch](docs/GeoViewPlus_Untersuchung_184_Timer_Ergebnisfelder_Datenfluss.md).
