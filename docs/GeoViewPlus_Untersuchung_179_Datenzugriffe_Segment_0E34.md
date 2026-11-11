@@ -24,11 +24,11 @@ Nach dem Laden von `DS=0E34h` oder `ES=0E34h` folgen wiederholt Speicherzugriffe
 | `0042h` | `MOV [0042h],SP` | SP-Wert speichern |
 | `0044h` | `POP WORD PTR [0044h]`; an anderer Stelle `MOV BP,[0044h]` | Wort an festem Offset lesen/schreiben |
 | `0046h` | `MOV BYTE PTR [0046h],00h` bzw. `04h` | Bytewert setzen |
-| `00E2h` | `INC WORD PTR [00E2h]` | Wortzähler erhöhen |
-| `00E4h` | `INC WORD PTR [00E4h]` | weiterer Wortzähler |
-| `00F0h` | `INC WORD PTR [00F0h]` | Wortzähler erhöhen |
-| `00F6h` | `MOV WORD PTR [00F6h],0000h` | Wort initialisieren |
-| `00FEh` | `MOV BX,00FEh`, danach `CMP WORD PTR [BX],0000h` | indirekter Zugriff auf Wort |
+| `0FE2h` | `INC WORD PTR [00E2h]` | Wortzähler erhöhen |
+| `0FE4h` | `INC WORD PTR [00E4h]` | weiterer Wortzähler |
+| `0FF0h` | `INC WORD PTR [00F0h]` | Wortzähler erhöhen |
+| `0FF6h` | `MOV WORD PTR [00F6h],0000h` | Wort initialisieren |
+| `0FFEh` | `MOV BX,00FEh`, danach `CMP WORD PTR [BX],0000h` | indirekter Zugriff auf Wort |
 | `01097h` | `DEC BYTE PTR [01097h]` | Bytezähler vermindern |
 | `01098h` | `INC WORD PTR [01098h]` | Wortzähler erhöhen |
 | `0109Ch` | `DEC WORD PTR [0109Ch]` | Wortzähler vermindern |
@@ -107,7 +107,7 @@ Damit ist die Beschreibung **gemeinsam genutzter Kernel-Datenbereich / globaler 
 
 ## 4. Was weiterhin offen ist
 
-- die symbolischen Namen der Offsets `0040h`, `0042h`, `0044h`, `0046h`, `00E2h`, `00E4h`, `00F0h`, `00F6h`, `00FEh`, `045Ch`, `050Ch`, `05ABh`, `05B1h`, `05BAh`, `074Ah`, `0E36h`, `0E37h`, `0E48h` usw.;
+- die symbolischen Namen der Offsets `0040h`, `0042h`, `0044h`, `0046h`, `0FE2h`, `0FE4h`, `0FF0h`, `0FF6h`, `0FFEh`, `045Ch`, `050Ch`, `05ABh`, `05B1h`, `05BAh`, `074Ah`, `0E36h`, `0E37h`, `0E48h` usw.;
 - die Grenzen und vollständige Größe der Datenstruktur;
 - die Bedeutung des zweiten häufig geladenen Segments `0F93h`;
 - eine Verbindung zu den elf FAR-CALL-Zielwerten der SVGA-Treiber.
