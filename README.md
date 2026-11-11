@@ -114,3 +114,6 @@ Fortsetzung der Kernel-Analyse: [Untersuchung 183 – Nachweis des CS-Segments u
 
 
 Fortsetzung der Kernel-Analyse: [Untersuchung 184 – Datenfluss der Timer-Ergebnisfelder 1088h, 108Ah und 108Ch](docs/GeoViewPlus_Untersuchung_184_Timer_Ergebnisfelder_Datenfluss.md).
+
+
+Fortsetzung der Kernel-Analyse: [Untersuchung 185 – Referenz- und Tabellenkontext der Timer-Abfrageroutinen](docs/GeoViewPlus_Untersuchung_185_Timer_Abfrageroutinen_Tabellenkontext.md).
