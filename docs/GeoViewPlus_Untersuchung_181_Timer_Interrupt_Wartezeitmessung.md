@@ -23,9 +23,9 @@ Anschließend setzt sie den Vektor 0000:0020h auf Offset 1B72h und das aktuelle 
 
 Nach dem folgenden Ablauf wird der Vektor wieder auf 9E5Bh:0000h gesetzt und die vorherigen Daten werden an anderer Stelle behandelt. Der alte Vektor wird in dieser Routine nicht direkt aus DS:1084h/1086h zurückgeschrieben; daher wird hier nur die beobachtete Vektorinstallation und -wiederherstellung dokumentiert, nicht eine weitergehende Deutung.
 
-## 3. Interrupt-Handler bei 114A2h
+## 3. Interruptähnliche Routine bei 114A2h – Zuordnung noch offen
 
-Der Handler enthält:
+Der Codeblock bei 114A2h enthält:
 
 ```asm
 114A2  push ax
@@ -42,19 +42,21 @@ Der Handler enthält:
 114BB  iret
 ```
 
-Damit ist direkt belegt:
-- Der Handler arbeitet mit dem Kernel-Datensegment 0E34h.
-- Das Byte 1097h wird bei jedem Eintritt dekrementiert.
+Damit ist für diese Routine direkt belegt:
+- Sie arbeitet mit dem Kernel-Datensegment 0E34h.
+- Das Byte 1097h wird dekrementiert.
 - Wenn das Byte null erreicht, wird das WORD-Feld 0FFEh auf 1 gesetzt.
-- Der Handler beendet sich mit IRET.
+- Die Routine endet mit IRET.
 
-**Schlussfolgerung:** 0FFEh fungiert in diesem Ablauf als durch den Timer-Interrupt gesetztes Ereignis-/Fertigflag. Das ist durch die Schreibstelle und die dazugehörige Warteschleife belegt.
+**Wichtige Einschränkung:** Die Installationsroutine 11458h schreibt als neuen Vektor den Offset 1B72h und CS in den INT-8-Vektor. Der lineare Dateiblick auf Offset 1B72h liegt jedoch mitten in einer anderen Instruktionsfolge. Deshalb kann die Routine 114A2h anhand dieser statischen Analyse nicht sicher als genau der installierte INT-8-Handler identifiziert werden. Die Verbindung zwischen dem installierten Vektor und dem Code bei 114A2h bleibt ungeklärt.
+
+**Schlussfolgerung:** 0FFEh wird in der Routine 114A2h als Ereignis-/Fertigflag gesetzt und von den Warteschleifen geprüft. Dass genau diese Routine über den temporär installierten INT-8-Vektor ausgelöst wird, ist noch nicht bewiesen.
 
 ## 4. Initialisierung und Warten
 
 Die Routine ab 1144Ch ruft zunächst 115CAh auf, um Datum und Uhrzeit über DOS-INT-21h (AH=2Ah und AH=2Ch) in Kernel-Datenfeldern abzuspeichern. Danach ruft sie 11458h auf, installiert also den temporären INT-8-Handler. Anschließend setzt sie DS:10A2h auf 1.
 
-Die Routine 11458h ruft 114BCh auf. Diese programmiert den PIT-Kanal 0 über die Ports 43h und 40h neu und setzt DS:1097h zunächst auf 4. Sie setzt 0FFEh auf 0 und wartet anschließend auf den Ablauf der Timerinterrupts. Der Handler reduziert 1097h bei jedem Interrupt; die Wartefolge prüft den Zählerstand und wartet danach auf das Ereignisflag 0FFEh.
+Die Routine 11458h ruft 114BCh auf. Diese programmiert den PIT-Kanal 0 über die Ports 43h und 40h neu und setzt DS:1097h zunächst auf 4. Sie setzt 0FFEh auf 0 und wartet anschließend auf den Ablauf der Timerinterrupts. Die Routine 114A2h reduziert 1097h und setzt bei null das Flag 0FFEh. Die genaue Verbindung zwischen diesem Code und dem temporär installierten INT-8-Vektor ist jedoch noch nicht geklärt.
 
 Die zentrale Initialisierung ist:
 
@@ -132,3 +134,8 @@ Es wurden keine Dateien verändert und keine Laufzeittests durchgeführt.
 ## 9. Nächster Schritt
 
 Als nächstes sollte die Datenflusskette der Zielwerte 1088h, 108Ah und 108Ch untersucht werden. Ihre späteren Leser und Verwendungen können zeigen, ob der Kernel die berechneten Werte als Wartezeit, Verzögerung, Zeitmessung oder für eine andere interne Funktion nutzt.
+
+
+## 10. Offene Kontrollflussfrage
+
+Die Installationsroutine schreibt 1B72h:CS in den Vektor INT 8. Der lineare Disassembler zeigt bei Offset 1B72h aber keinen passenden IRET-Handler, sondern einen Einstieg in eine andere Instruktionsfolge. Daher ist die tatsächliche Interrupt-Zielroutine noch zu identifizieren. Die bisherigen Aussagen zur Zähler- und Flag-Logik bleiben als Befund der einzelnen Routinen gültig; ihre vollständige Verknüpfung zum INT-8-Ablauf ist noch nicht gesichert.
