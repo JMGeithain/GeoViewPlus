@@ -48,9 +48,9 @@ Damit ist für diese Routine direkt belegt:
 - Wenn das Byte null erreicht, wird das WORD-Feld 0FFEh auf 1 gesetzt.
 - Die Routine endet mit IRET.
 
-**Wichtige Einschränkung:** Die Installationsroutine 11458h schreibt als neuen Vektor den Offset 1B72h und CS in den INT-8-Vektor. Der lineare Dateiblick auf Offset 1B72h liegt jedoch mitten in einer anderen Instruktionsfolge. Deshalb kann die Routine 114A2h anhand dieser statischen Analyse nicht sicher als genau der installierte INT-8-Handler identifiziert werden. Die Verbindung zwischen dem installierten Vektor und dem Code bei 114A2h bleibt ungeklärt.
+**Nachtrag aus Untersuchung 183:** Der MZ-Einstieg bei 0000:02B1h führt mit einem FAR-CALL nach 0F93:0000h. Die Routine 11458h liegt im geladenen Segment 0F93h bei Offset 1B28h. Damit zeigt der installierte Vektor 0F93:1B72h exakt auf den linearen Ladeoffset 114A2h. Die Zuordnung der Routine 114A2h zum temporären INT-8-Vektor ist damit bestätigt.
 
-**Schlussfolgerung:** 0FFEh wird in der Routine 114A2h als Ereignis-/Fertigflag gesetzt und von den Warteschleifen geprüft. Dass genau diese Routine über den temporär installierten INT-8-Vektor ausgelöst wird, ist noch nicht bewiesen.
+**Schlussfolgerung:** 0FFEh wird in der Routine 114A2h als Ereignis-/Fertigflag gesetzt und von den Warteschleifen geprüft. Die Verbindung zum installierten INT-8-Vektor ist durch die CS-relative Adressrechnung jetzt belegt.
 
 ## 4. Initialisierung und Warten
 
@@ -136,6 +136,6 @@ Es wurden keine Dateien verändert und keine Laufzeittests durchgeführt.
 Als nächstes sollte die Datenflusskette der Zielwerte 1088h, 108Ah und 108Ch untersucht werden. Ihre späteren Leser und Verwendungen können zeigen, ob der Kernel die berechneten Werte als Wartezeit, Verzögerung, Zeitmessung oder für eine andere interne Funktion nutzt.
 
 
-## 10. Offene Kontrollflussfrage
+## 10. Nachtrag aus Untersuchung 183
 
-Die Installationsroutine schreibt 1B72h:CS in den Vektor INT 8. Der lineare Disassembler zeigt bei Offset 1B72h aber keinen passenden IRET-Handler, sondern einen Einstieg in eine andere Instruktionsfolge. Daher ist die tatsächliche Interrupt-Zielroutine noch zu identifizieren. Die bisherigen Aussagen zur Zähler- und Flag-Logik bleiben als Befund der einzelnen Routinen gültig; ihre vollständige Verknüpfung zum INT-8-Ablauf ist noch nicht gesichert.
+Der MZ-Einstieg bei 0000:02B1h führt mit einem FAR-CALL nach 0F93:0000h. Die Routine 11458h liegt im Segment 0F93h bei Offset 1B28h. Somit zeigt 0F93:1B72h exakt auf den linearen Ladeoffset 114A2h. Der dortige IRET-Code ist der tatsächlich installierte INT-8-Handler. Die zuvor offene Kontrollflussfrage ist damit geklärt.
