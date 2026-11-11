@@ -61,54 +61,54 @@ Unmittelbar hinter den beiden Leseroutinen liegen zwei weitere FAR-Routinen:
 
 ### 5.1 Routine 9593h – Kopieren eines Datenblocks
 
-    9593  push cx
-    9594  push si
-    9595  push di
-    9596  push ds
-    9597  call 961Ah
-    959A  cli
-    959B  mov si,0FCEh
-    959E  mov cx,000Ah
-    95A1  rep movsw
-    95A3  sti
-    95A4  pop ds
-    95A5  pop di
-    95A6  pop si
-    95A7  pop cx
-    95A8  retf
+    958D  push cx
+    958E  push si
+    958F  push di
+    9590  push ds
+    9591  call 961Ah
+    9594  cli
+    9595  mov si,0FCEh
+    9598  mov cx,000Ah
+    959B  rep movsw
+    959D  sti
+    959E  pop ds
+    959F  pop di
+    95A0  pop si
+    95A1  pop cx
+    95A2  retf
 
 Die Routine kopiert zehn WORDs (20 Bytes) aus dem Kernel-Datensegment ab DS:0FCEh nach ES:DI. Die Kopie erfolgt bei gesperrten Interrupts. Sie verändert die Quelle nicht.
 
-### 5.2 Routine 95A9h – Snapshot mit anschließendem Löschen
+### 5.2 Routine 95A3h – Snapshot mit anschließendem Löschen
 
-    95A9  push cx
-    95AA  push si
-    95AB  push di
-    95AC  push es
-    95AD  mov si,ds
-    95AF  mov es,si
-    95B1  mov si,0FE2h
-    95B4  mov di,0FCEh
-    95B7  mov cx,0009h
-    95BA  rep movsw
-    95BC  mov di,0FE2h
-    95BF  xor ax,ax
-    95C1  mov cx,0009h
-    95C4  rep stosw
-    95C6  mov bx,0FF8h
-    95C9  cmp word ptr ds:0FF6h,ax
-    95CD  jne 95D6
-    95CF  mov bx,[bx+6]
-    95D2  or bx,bx
-    95D4  je 95D9
-    95D6  inc ax
-    95D7  jmp 95CF
-    95D9  mov ds:0FE0h,ax
-    95DC  pop es
-    95DD  pop di
-    95DE  pop si
-    95DF  pop cx
-    95E0  ret
+    95A3  push cx
+    95A4  push si
+    95A5  push di
+    95A6  push es
+    95A7  mov si,ds
+    95A9  mov es,si
+    95AB  mov si,0FE2h
+    95AE  mov di,0FCEh
+    95B1  mov cx,0009h
+    95B4  rep movsw
+    95B6  mov di,0FE2h
+    95B9  xor ax,ax
+    95BB  mov cx,0009h
+    95BE  rep stosw
+    95C0  mov bx,0FF8h
+    95C3  cmp word ptr ds:0FF6h,ax
+    95C7  jne 95D0
+    95C9  mov bx,[bx+6]
+    95CC  or bx,bx
+    95CE  je 95D3
+    95D0  inc ax
+    95D1  jmp 95C9
+    95D3  mov ds:0FE0h,ax
+    95D6  pop es
+    95D7  pop di
+    95D8  pop si
+    95D9  pop cx
+    95DA  ret
 
 Die Routine kopiert neun WORDs (18 Bytes) aus DS:0FE2h nach DS:0FCEh, löscht anschließend die neun ursprünglichen WORDs ab 0FE2h und wartet in einer Schleife auf einen Zustand, der von 0FF6h und einer verketteten Struktur ab 0FF8h abhängt. Danach speichert sie den Schleifenzähler in 0FE0h.
 
@@ -129,7 +129,7 @@ Der Tabellenkandidat ab E200h muss in einer Folgestudie mit seinen tatsächliche
 1. Die Leseroutinen 9567h und 9570h sind als FAR-Routinen bestätigt.
 2. 9570h ist als Wort in einem möglichen Offsettabellenbereich ab E200h eingetragen; 9567h erscheint als isolierter Wortwert bei E32Ch.
 3. Eine bestätigte öffentliche Exportzuordnung liegt noch nicht vor.
-4. Die Routine 95A9h kopiert neun WORDs aus dem Bereich 0FE2h–0FF2h in einen Snapshotbereich ab 0FCEh und löscht anschließend die Originalfelder.
+4. Die Routine 95A3h kopiert neun WORDs aus dem Bereich 0FE2h–0FF2h in einen Snapshotbereich ab 0FCEh und löscht anschließend die Originalfelder.
 5. 0FF6h und die verkettete Struktur ab 0FF8h beeinflussen die anschließende Warteschleife.
 
 ## 8. Nächster Schritt
