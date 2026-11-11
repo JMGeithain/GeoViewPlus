@@ -108,3 +108,6 @@ Fortsetzung der Kernel-Analyse: [Untersuchung 180 – Datenfelder 0040h–0046h 
 
 
 Fortsetzung der Kernel-Analyse: [Untersuchung 182 – INT-8-Einsprungpunkt und CS-relative Adressierung](docs/GeoViewPlus_Untersuchung_182_INT8_CS_Einsprungpunkt.md).
+
+
+Fortsetzung der Kernel-Analyse: [Untersuchung 183 – Nachweis des CS-Segments und Auflösung des INT-8-Vektors](docs/GeoViewPlus_Untersuchung_183_Nachweis_CS_Segment_INT8.md).
