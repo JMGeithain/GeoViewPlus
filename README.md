@@ -92,3 +92,5 @@ Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 171 – Bytekontext der Rel
 Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 173 – Gruppierung der FAR-CALL-Ziele in den SVGA-Treibern](docs/GeoViewPlus_Untersuchung_173_FAR_CALL_Zielgruppen.md).
 
 Fortsetzung der Kernel-Analyse: [Untersuchung 174 – Aufbau und Grenzen der vorliegenden KERNEL.EXE](docs/GeoViewPlus_Untersuchung_174_KERNEL_EXE_MZ_Analyse.md).
+
+Fortsetzung der Kernel-Analyse: [Untersuchung 175 – Die 276 DOS-MZ-Relokationen der KERNEL.EXE](docs/GeoViewPlus_Untersuchung_175_MZ_Relokationstabelle.md).
