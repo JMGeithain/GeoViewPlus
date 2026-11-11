@@ -86,3 +86,5 @@ Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 168 – Textlängenfelder u
 Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 169 – Vergleich von Treiber-Ressource 1 mit Ressource 2](docs/GeoViewPlus_Untersuchung_169_Treiberressource1_Vergleich.md).
 
 Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 170 – Relokationseinträge in Treiber-Ressource 1](docs/GeoViewPlus_Untersuchung_170_Treiberressource1_Relokationen.md).
+
+Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 171 – Bytekontext der Relokationsziele in Treiber-Ressource 1](docs/GeoViewPlus_Untersuchung_171_Relokationsziele_Kontext.md).
