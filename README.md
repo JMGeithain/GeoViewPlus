@@ -72,3 +72,5 @@ Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 161 – CC-CC-Muster und bi
 Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 162 – Ressourcenenden und mögliche Abschlussbereiche](docs/GeoViewPlus_Untersuchung_162_Ressourcenenden_Abschlussbereiche.md).
 
 Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 163 – Abgleich der Ressourcenlänge mit den Headerfeldern +08h und +14h](docs/GeoViewPlus_Untersuchung_163_Ressourcenlaenge_Headerfeld_08_14.md).
+
+Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 164 – Tabellenziele im Verhältnis zum Grenzwert +08h](docs/GeoViewPlus_Untersuchung_164_Tabellenziele_und_Grenzwert_08.md).
