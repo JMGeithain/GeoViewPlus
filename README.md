@@ -117,3 +117,6 @@ Fortsetzung der Kernel-Analyse: [Untersuchung 184 – Datenfluss der Timer-Ergeb
 
 
 Fortsetzung der Kernel-Analyse: [Untersuchung 185 – Referenz- und Tabellenkontext der Timer-Abfrageroutinen](docs/GeoViewPlus_Untersuchung_185_Timer_Abfrageroutinen_Tabellenkontext.md).
+
+
+Fortsetzung der Kernel-Analyse: [Untersuchung 186 – Feldanalyse des Snapshot-Bereichs 0FE2h–0FF2h](docs/GeoViewPlus_Untersuchung_186_Snapshotbereich_0FE2_0FF2.md).
