@@ -70,3 +70,5 @@ Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 160 – Suche der 12-Byte-M
 Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 161 – CC-CC-Muster und binäre Bereiche in allen Ressourcen](docs/GeoViewPlus_Untersuchung_161_CC_CC_Muster_und_Binaerbereiche.md).
 
 Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 162 – Ressourcenenden und mögliche Abschlussbereiche](docs/GeoViewPlus_Untersuchung_162_Ressourcenenden_Abschlussbereiche.md).
+
+Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 163 – Abgleich der Ressourcenlänge mit den Headerfeldern +08h und +14h](docs/GeoViewPlus_Untersuchung_163_Ressourcenlaenge_Headerfeld_08_14.md).
