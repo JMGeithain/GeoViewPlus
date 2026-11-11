@@ -88,3 +88,5 @@ Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 169 – Vergleich von Treib
 Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 170 – Relokationseinträge in Treiber-Ressource 1](docs/GeoViewPlus_Untersuchung_170_Treiberressource1_Relokationen.md).
 
 Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 171 – Bytekontext der Relokationsziele in Treiber-Ressource 1](docs/GeoViewPlus_Untersuchung_171_Relokationsziele_Kontext.md).
+
+Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 173 – Gruppierung der FAR-CALL-Ziele in den SVGA-Treibern](docs/GeoViewPlus_Untersuchung_173_FAR_CALL_Zielgruppen.md).
