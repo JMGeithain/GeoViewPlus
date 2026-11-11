@@ -80,3 +80,5 @@ Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 165 – Headerfeld +0Ah und
 Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 166 – Headerkontrolle an weiteren GeoWorks-1.x-Dateien](docs/GeoViewPlus_Untersuchung_166_Externe_GEO_Kontrolle.md).
 
 Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 167 – Tabellenstruktur in Treiber-Ressource 2](docs/GeoViewPlus_Untersuchung_167_Treiberressource2_Tabellenstruktur.md).
+
+Fortsetzung der GEO-Ressourcenanalyse: [Untersuchung 168 – Textlängenfelder und Abschlussbytes in Treiber-Ressource 2](docs/GeoViewPlus_Untersuchung_168_Textlaengen_und_Abschlussbytes.md).
