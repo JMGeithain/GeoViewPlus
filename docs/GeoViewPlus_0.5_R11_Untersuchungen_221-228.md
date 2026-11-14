@@ -48,3 +48,11 @@ Die konkreten Alpha-ZIP-Dateien werden in diesem Schritt nicht automatisch in Gi
 ## Reproduzierbarkeit
 
 Für eine vollständige Wiederholung werden die Originaldateien aus dem GeoWorks-1.x-Archiv benötigt. Das Archiv `GEOWORKS.zip` selbst wird aus Gründen der Herkunfts- und Lizenzklarheit nicht in dieses öffentliche Repository übernommen. Analyseprogramme und abgeleitete, unkritische Tabellen sollen separat versioniert werden, sobald ihre Dateien einzeln geprüft und verfügbar sind.
+
+---
+
+## Alpha45 / Untersuchung 230 – Instruktionskontext-Audit
+
+Am 14.11.2026 wurden die 66 Alpha44-Bytekandidaten in beiden vollständigen WRITE.GEO-Varianten mit GNU objdump 2.44 (i8086) linear dekodiert. An allen 66 Kandidatenpositionen dekodiert der lineare Sweep MOV SI mit dem erwarteten Immediate; die Dekodierungen stimmen zwischen beiden Varianten überein. 15 Tests bestanden.
+
+**Methodische Einschränkung:** Der Sweep lief ab Dateioffset 0 über den vollständigen GEO-Dateiinhalt. Header, Tabellen, Code und Ressourcen wurden nicht zuvor getrennt. Deshalb sind die Stellen als Instruktionskontext-Kandidaten dokumentiert, nicht als endgültig bestätigte Code-Referenzen. Details: [Untersuchung 230](GeoViewPlus_Untersuchung_230_Alpha45_R11_Instruktionskontext.md).
