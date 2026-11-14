@@ -136,3 +136,9 @@ Neueste dokumentierte Stufe: [Untersuchung 230 – Alpha45 Instruktionskontext-A
 Analyseprogramm und Tests: [analysis/alpha45](analysis/alpha45/README.md). Alpha45 prüft die 66 Alpha44-Muster in beiden WRITE.GEO-Varianten mit GNU objdump im 8086-Modus. Alle 66 werden im linearen Sweep als MOV SI dekodiert. **Das ist noch kein vollständiger Nachweis echter Codegrenzen oder Laufzeitreferenzen**, da der gesamte GEO-Dateiinhalt einschließlich Header und Daten linear dekodiert wurde.
 
 Nächster Schritt: Alpha46 – Code-Ressourcengrenzen und gültige Einsprungpunkte des GeoWorks-1.x-Geodeformats rekonstruieren. Originalarchive werden nicht in das öffentliche Repository übernommen.
+
+## GeoWorks 1.x – R11 / GeoWrite: Alpha46
+
+Neueste dokumentierte Stufe: [Untersuchung 231 – Alpha46 Geode Resource Map](docs/GeoViewPlus_Untersuchung_231_Alpha46_Geode_ResourceMap.md). Alpha46 rekonstruiert den Version-1-Geode-Kopf, die Ressourcentabelle und 351 Programmsegment-Fixups aus Segment 1. Alle 66 Alpha45-Kandidaten liegen in Code-Ressourcen und dekodieren dort ressourcenlokal als MOV SI mit dem erwarteten ChunkHandle. 38 Tests bestanden. Der rekursive Kontrollfluss und die Namen der Kernel-Ordinale 0x00A9 und 0x01E6 bleiben Gegenstand von Alpha47.
+
+Analyseprogramm und Tests: [analysis/alpha46](analysis/alpha46/README.md).
