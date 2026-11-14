@@ -1,0 +1,67 @@
+{
+  "archive": "GEOWORKS.zip",
+  "archive_members": 2951,
+  "zip_crc_ok": true,
+  "write_geo_size": 73110,
+  "geos_file_magic": "0x53CF45C7",
+  "geode_header_offset_version1": "0x00C0",
+  "application_type": 1,
+  "permanent_name": "write",
+  "permanent_extension": "app",
+  "num_segments": 36,
+  "num_libraries": 3,
+  "num_exports": 16,
+  "libraries": [
+    {"index":0,"name":"ui","type":16384,"protocol_version":693,"protocol_revision":0},
+    {"index":1,"name":"spool","type":16384,"protocol_version":613,"protocol_revision":0},
+    {"index":2,"name":"spell","type":16384,"protocol_version":2,"protocol_revision":0}
+  ],
+  "exports_by_segment": {"1":16},
+  "segment_table": {
+    "start":"0x018A",
+    "length_array_start":"0x018A",
+    "position_array_start":"0x01D2",
+    "fixup_length_array_start":"0x0262",
+    "flags_array_start":"0x02AA",
+    "end":"0x02F2"
+  },
+  "segment_table_identical_between_variants": true,
+  "code_segments": [2,3,4,5,6,7,8],
+  "candidate_count_first_variant": 66,
+  "candidate_instruction_start_count_resource_local_sweep": 66,
+  "candidate_mov_si_expected_count_resource_local_sweep": 66,
+  "candidate_counts_by_segment": {"2":7,"3":29,"4":16,"5":5,"8":9},
+  "candidate_flow_categories_first_control_flow_within_next_4": {
+    "far_call":28,"none_in_next_4":7,"near_call":22,"near_jmp":3,"far_jmp":6
+  },
+  "near_control_flow_targets_resolved_to_instruction_starts":25,
+  "program_segment_fixup_count_in_segment_1":351,
+  "program_segment_references_by_target_segment": {
+    "2":55,"5":41,"6":6,"3":111,"4":90,"7":14,"1":3,"8":31
+  },
+  "program_segment_references_in_target_bounds":351,
+  "program_segment_references_to_code_segments":348,
+  "program_segment_targets_at_instruction_starts_resource_local_sweep":344,
+  "r11_segment_index":11,
+  "r11_file_offset":"0x09B22",
+  "r11_segment_length":"0x0670",
+  "r11_segment_flags":"0x087A",
+  "r11_lmem_header":{
+    "segment_number":11,
+    "handle_list_offset":16,
+    "flags":0,
+    "type":0,
+    "block_size_field":1644,
+    "handle_count":20,
+    "free_offset":0,
+    "free_size":0
+  },
+  "kernel_exe_present":true,
+  "kernel_exe_size":72736,
+  "kernel_exe_magic":"MZ",
+  "kernel_exe_sha256":"c2cc8952cdb01d0f459bf281ee3b78f8ce9464aba0b58c3758f8c73e24fb6eb5",
+  "candidate_context_method_limit":"GNU objdump performs a linear sweep from offset zero inside each resource flagged HAF_CODE. This is resource-local rather than whole-file disassembly, but it is not yet recursive control-flow tracing from validated entry points.",
+  "pointer_method_limit":"Segment-1 fixups with raw type 0x0022 are interpreted as program-segment words. The preceding WORD is treated as the offset component, consistent with GeoDump's documented offset-first/segment-last far-pointer representation. Target instruction-boundary checks are against resource-local linear-sweep maps, not a complete control-flow graph.",
+  "next_step":"Use the 351 segment-1 program-segment pointer pairs as entry-point candidates, trace control flow recursively, and resolve kernel ordinals 0x00A9 and 0x01E6 with a matching GeoWorks 1.x kernel symbol/export source.",
+  "disassembler":"GNU objdump (GNU Binutils for Debian) 2.44"
+}
