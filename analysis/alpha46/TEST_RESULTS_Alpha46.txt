@@ -1,0 +1,14 @@
+Ran 38 tests in 0.425s
+
+OK
+
+Test coverage:
+- ZIP integrity and archive metadata
+- GeoWorks 1.x magic and version-1 geode header at 0x00C0
+- application identity, resource/library/export counts
+- segment-table offsets and version parity
+- HAF_CODE resources and all 66 resource-local MOV SI candidates
+- call/jump context counts and local target boundaries
+- 351 segment-1 program-segment fixups and target ranges
+- R11 segment 11 LMem header and 20-entry handle list
+- KERNEL.EXE MZ identification
