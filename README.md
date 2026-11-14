@@ -128,3 +128,11 @@ Die fortlaufende Dokumentation der Untersuchungen 221–228 zur R11-Ressource vo
 **Wichtiger Statushinweis:** Die neun 68-Byte-Kandidaten und die ChunkHandle-Zuordnung `0x0026` bis `0x0036` sind strukturelle Befunde aus den bisherigen Analysepaketen. Die in Alpha44 gefundenen `BE xx xx`-Muster sind zunächst nur Opcode-/Referenzkandidaten; eine bestätigte Code-Referenzkette erfordert Disassemblierung an echten Instruktionsgrenzen und Nachweis der Handle-Auflösung. Die Grafiksemantik (Icon/Cursor/Maske) bleibt offen.
 
 Nächster technischer Schritt: Alpha45 – instruktionsgenaue Disassemblierung, Kontrollfluss- und Handle-Auflösungsprüfung. Das Originalarchiv `GEOWORKS.zip` wird nicht öffentlich hochgeladen.
+
+## GeoWorks 1.x – R11 / GeoWrite: Alpha45
+
+Neueste dokumentierte Stufe: [Untersuchung 230 – Alpha45 Instruktionskontext-Audit](docs/GeoViewPlus_Untersuchung_230_Alpha45_R11_Instruktionskontext.md).
+
+Analyseprogramm und Tests: [analysis/alpha45](analysis/alpha45/README.md). Alpha45 prüft die 66 Alpha44-Muster in beiden WRITE.GEO-Varianten mit GNU objdump im 8086-Modus. Alle 66 werden im linearen Sweep als MOV SI dekodiert. **Das ist noch kein vollständiger Nachweis echter Codegrenzen oder Laufzeitreferenzen**, da der gesamte GEO-Dateiinhalt einschließlich Header und Daten linear dekodiert wurde.
+
+Nächster Schritt: Alpha46 – Code-Ressourcengrenzen und gültige Einsprungpunkte des GeoWorks-1.x-Geodeformats rekonstruieren. Originalarchive werden nicht in das öffentliche Repository übernommen.
