@@ -1,0 +1,19 @@
+test_01_archive_crc ... ok
+test_02_archive_entry_count ... ok
+test_03_write_file_size ... ok
+test_04_r11_resource_size ... ok
+test_05_r11_variants_identical ... ok
+test_06_first_variant_candidates ... ok
+test_07_second_variant_candidates ... ok
+test_08_candidate_offsets_equal ... ok
+test_09_all_linear_instruction_starts ... ok
+test_10_all_mov_si_matches ... ok
+test_11_all_candidates_outside_r11 ... ok
+test_12_per_handle_distribution ... ok
+test_13_second_variant_linear_decode ... ok
+test_14_same_decode_both_variants ... ok
+test_15_all_candidate_offsets_outside_r11 ... ok
+
+Ran 15 tests in 0.620s
+
+OK
