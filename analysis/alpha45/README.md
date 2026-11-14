@@ -19,3 +19,10 @@ GEOWORKS_ZIP=GEOWORKS.zip python -m unittest -v test_alpha45.py
 ```
 
 Dateien: Analyseprogramm, Tests, Testprotokoll, Bericht, 66-Kontext-CSV und JSON-Zusammenfassung. Kein GUI-Umbau und kein EXE-Build.
+
+
+## Repository-Ausgaben
+
+- [Maschinenlesbare Zusammenfassung](GEO_alpha45_summary.json)
+- [66 Kandidatenpositionen](GEO_alpha45_candidate_offsets.csv)
+- [Testprotokoll](TEST_RESULTS_Alpha45.txt)
