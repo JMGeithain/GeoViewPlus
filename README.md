@@ -120,3 +120,11 @@ Fortsetzung der Kernel-Analyse: [Untersuchung 185 – Referenz- und Tabellenkont
 
 
 Fortsetzung der Kernel-Analyse: [Untersuchung 186 – Feldanalyse des Snapshot-Bereichs 0FE2h–0FF2h](docs/GeoViewPlus_Untersuchung_186_Snapshotbereich_0FE2_0FF2.md).
+
+## GeoWorks 1.x – R11-Ressourcenanalyse (GeoViewPlus 0.5)
+
+Die fortlaufende Dokumentation der Untersuchungen 221–228 zur R11-Ressource von WRITE.GEO wurde ergänzt: [GeoViewPlus 0.5 – R11-Untersuchungen 221–228](docs/GeoViewPlus_0.5_R11_Untersuchungen_221-228.md).
+
+**Wichtiger Statushinweis:** Die neun 68-Byte-Kandidaten und die ChunkHandle-Zuordnung `0x0026` bis `0x0036` sind strukturelle Befunde aus den bisherigen Analysepaketen. Die in Alpha44 gefundenen `BE xx xx`-Muster sind zunächst nur Opcode-/Referenzkandidaten; eine bestätigte Code-Referenzkette erfordert Disassemblierung an echten Instruktionsgrenzen und Nachweis der Handle-Auflösung. Die Grafiksemantik (Icon/Cursor/Maske) bleibt offen.
+
+Nächster technischer Schritt: Alpha45 – instruktionsgenaue Disassemblierung, Kontrollfluss- und Handle-Auflösungsprüfung. Das Originalarchiv `GEOWORKS.zip` wird nicht öffentlich hochgeladen.
