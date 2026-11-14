@@ -1,0 +1,32 @@
+{
+  "archive": "GEOWORKS.zip",
+  "zip_crc_ok": true,
+  "archive_members": 2951,
+  "source_files": [
+    "GEOWORKS/WORLD/WRITE.GEO",
+    "GEOWORKS/WORLD/PROGRAMM.E/WRITE.GEO"
+  ],
+  "write_geo_size": 73110,
+  "write_geo_sha256": {
+    "GEOWORKS/WORLD/WRITE.GEO": "0d2958b810948603d15e412a61598623b9a4ccb73cfeb9fbe08d50ee718a6fd0",
+    "GEOWORKS/WORLD/PROGRAMM.E/WRITE.GEO": "3f1e606684ed6beae7d9ae26d23ad7430762ed6253fef596d1362ebdecba5e3f"
+  },
+  "r11_file_offset": "0x9B22",
+  "r11_size": 1644,
+  "r11_identical_between_variants": true,
+  "target_handles": ["0x0026","0x0028","0x002A","0x002C","0x002E","0x0030","0x0032","0x0034","0x0036"],
+  "candidate_counts_first_variant": {"0x0026":3,"0x0028":8,"0x002A":6,"0x002C":4,"0x002E":5,"0x0030":12,"0x0032":10,"0x0034":15,"0x0036":3},
+  "candidate_counts_second_variant": {"0x0026":3,"0x0028":8,"0x002A":6,"0x002C":4,"0x002E":5,"0x0030":12,"0x0032":10,"0x0034":15,"0x0036":3},
+  "candidate_total_first_variant": 66,
+  "candidate_total_second_variant": 66,
+  "candidate_offsets_identical_between_variants": true,
+  "objdump_linear_sweep_instruction_starts": 66,
+  "objdump_linear_sweep_mov_si_matches": 66,
+  "second_variant_linear_sweep_instruction_starts": 66,
+  "second_variant_linear_sweep_mov_si_matches": 66,
+  "same_instruction_decode_both_variants": 66,
+  "all_candidates_outside_r11": true,
+  "disassembler": "GNU objdump (GNU Binutils for Debian) 2.44",
+  "method_limit": "GNU objdump was run as a linear sweep from file offset 0 over the entire GEO file. A GEOS GEO file mixes headers, resource tables, code and data; this is not a substitute for parsing code/resource boundaries and valid entry points. Candidate instruction starts remain provisional.",
+  "next_validation": "Identify code-bearing resources and entry points, then disassemble from valid entry points and verify control flow and handle resolution."
+}
