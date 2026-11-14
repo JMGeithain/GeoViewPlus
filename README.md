@@ -142,3 +142,7 @@ Nächster Schritt: Alpha46 – Code-Ressourcengrenzen und gültige Einsprungpunk
 Neueste dokumentierte Stufe: [Untersuchung 231 – Alpha46 Geode Resource Map](docs/GeoViewPlus_Untersuchung_231_Alpha46_Geode_ResourceMap.md). Alpha46 rekonstruiert den Version-1-Geode-Kopf, die Ressourcentabelle und 351 Programmsegment-Fixups aus Segment 1. Alle 66 Alpha45-Kandidaten liegen in Code-Ressourcen und dekodieren dort ressourcenlokal als MOV SI mit dem erwarteten ChunkHandle. 38 Tests bestanden. Der rekursive Kontrollfluss und die Namen der Kernel-Ordinale 0x00A9 und 0x01E6 bleiben Gegenstand von Alpha47.
 
 Analyseprogramm und Tests: [analysis/alpha46](analysis/alpha46/README.md).
+
+## GeoWorks 1.x – R11 / GeoWrite: Alpha47
+
+Neueste dokumentierte Stufe: [Untersuchung 232 – Alpha47 Kontrollflussanalyse](docs/GeoViewPlus_Untersuchung_232_Alpha47_ControlFlow.md). Alpha47 verfolgt 343 eindeutige Startadressen rekursiv. 48 der 66 MOV-SI-Kandidaten werden erreicht; 18 bleiben im aktuellen Modell unerreicht. Das ist kein Nachweis für toten Code, da indirekte Dispatch-Mechanismen und überlappende Dekodierungen offen sind. 20 Tests bestanden. Analyseprogramm und Tests: [analysis/alpha47](analysis/alpha47/README.md).
