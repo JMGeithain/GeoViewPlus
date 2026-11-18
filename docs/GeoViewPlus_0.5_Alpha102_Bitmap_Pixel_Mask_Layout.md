@@ -9,7 +9,7 @@ Alpha102 untersucht die Pixeldaten der in Alpha101 extrahierten neun DESK-Monike
 Untersuchte Referenz ist der PC/GEOS-Quellstand `01c7a0172688aa72cc29898eb832dd5915d49cf7` im Repository `bluewaysw/pcgeos`.
 
 1. `Include/graphics.def` definiert `BMT_MASK` als zusätzliche Maskenebene, `BMT_PALETTE` als Kennzeichen einer mitgelieferten Palette und `BMT_COMPLEX` als Kennzeichen für komplexe Bitmaps. Die einfache `Bitmap`-Struktur besteht aus Breite, Höhe, Kompressionsart und Typ. Die komplexe `CBitmap`-Struktur besitzt dagegen Offsets `CB_data` und `CB_palette`.
-2. `Library/Kernel/Graphics/graphicsRasterDraw.asm`, Routine `CalcLineSize`, berechnet die Bilddaten pro Scanline und addiert bei gesetztem `BMT_MASK` die Maskenbytes hinzu.
+2. `Library/Trans/Graphics/Vector/EPS/Export/exportBitmap.asm`, Routine `CalcLineSize`, berechnet die Bilddaten pro Scanline und addiert bei gesetztem `BMT_MASK` die Maskenbytes hinzu.
 3. `Library/Trans/Graphics/Vector/EPS/Export/exportBitmap.asm`, Routine `MaskOffPixels`, zeigt die Reihenfolge explizit: Der Zeiger beginnt auf der Maske (Kommentar `mask comes first`); nach `ceil(width/8)` Bytes beginnt die Pixeldatenebene. Die Maske wird für jede Scanline separat verarbeitet.
 4. Dieselbe Routine startet das Maskenbit mit `0x80` und schiebt es nach rechts. Das höchstwertige Bit steht damit für das linke Pixel. Ein gesetztes Maskenbit lässt das Pixel unverändert; ein gelöschtes Bit wird als maskiertes Pixel behandelt.
 5. `EmitColorScan` verarbeitet 4-Bit-Pixel zuerst aus dem hohen Nibble und anschließend aus dem niedrigen Nibble. Pixel 0 liegt somit im High-Nibble, Pixel 1 im Low-Nibble.
