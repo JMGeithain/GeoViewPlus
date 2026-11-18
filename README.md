@@ -146,3 +146,16 @@ Analyseprogramm und Tests: [analysis/alpha46](analysis/alpha46/README.md).
 ## GeoWorks 1.x – R11 / GeoWrite: Alpha47
 
 Neueste dokumentierte Stufe: [Untersuchung 232 – Alpha47 Kontrollflussanalyse](docs/GeoViewPlus_Untersuchung_232_Alpha47_ControlFlow.md). Alpha47 verfolgt 343 eindeutige Startadressen rekursiv. 48 der 66 MOV-SI-Kandidaten werden erreicht; 18 bleiben im aktuellen Modell unerreicht. Das ist kein Nachweis für toten Code, da indirekte Dispatch-Mechanismen und überlappende Dekodierungen offen sind. 20 Tests bestanden. Analyseprogramm und Tests: [analysis/alpha47](analysis/alpha47/README.md).
+
+
+## PC/GEOS 2.x – TokenEntry und Moniker-Auflösung: Alpha99
+
+Neueste PC/GEOS-2.x-Stufe: [GeoViewPlus 0.5 – Alpha99](docs/GeoViewPlus_0.5_Alpha99_TokenEntry_MonikerAufloesung.md).
+
+Alpha99 löst den DB-Map-Block 0x00D4 bis zur Token-Map auf. Für die bereitgestellte lokale Datei wurden 268 TokenEntry-Datensätze und 1.081 Moniker-Referenzen ohne fehlerhafte DB-Zielauflösung nachgewiesen. Beim Token DESK wurden neun VisMoniker-Köpfe mit Größen von 64×40 bis 15×10 ausgelesen.
+
+Parser: `geoviewplus_token_db_v2_database.py`; Tests: `tests/test_token_db_v2_database.py`; Testprotokoll: `tests/TEST_RESULTS_Alpha99.txt`.
+
+Die GUI-Erweiterung für die Token-/Moniker-Tabelle und den Export unveränderter Moniker-Rohdaten liegt als [Alpha99-Integrationspatch](alpha99/GeoViewPlus_Alpha99_GUI_Integration.patch) vor. Die Patchbasis ist die Alpha98-GUI, nicht die unveränderte 0.4.4.1-Release-Datei.
+
+Die Originaldatei `token_da(2).000` wird aus Datenschutz- und Provenienzgründen nicht in das öffentliche Repository übernommen. GString-/Bitmap-Dekodierung und echte Icon-Vorschau bleiben Alpha100 vorbehalten.
