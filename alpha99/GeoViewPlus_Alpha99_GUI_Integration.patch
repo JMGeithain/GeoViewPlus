@@ -1,0 +1,180 @@
+--- GeoViewPlus.py (Alpha98)
++++ GeoViewPlus.py (Alpha99)
+@@ -40,6 +40,7 @@
+ 
+ from geoworks1_app_monikers import parse_v1_resources, scan_app_monikers, render_app_moniker
+ from geoviewplus_token_db_v2 import parse_pcgeos2_vm_directory, summarize_vm_directory, TokenDBFormatError
++from geoviewplus_token_db_v2_database import analyze_token_database, summarize_token_database
+ 
+ # GeoWorks 1.x 4-bit palette recovered from WORLD/DUMP.GEO (mapPixels):
+ # RGB components are 4-bit values 0, 5, 10, 15; scale by 17 for 8-bit RGB.
+@@ -589,6 +590,8 @@
+         self.btn_app_gallery.pack(side=tk.LEFT, padx=2)
+         self.btn_vm_blocks = ttk.Button(toolbar, text='VM-Blöcke…', command=self.open_vm_directory_viewer, state='disabled')
+         self.btn_vm_blocks.pack(side=tk.LEFT, padx=2)
++        self.btn_token_monikers = ttk.Button(toolbar, text='Token/Moniker…', command=self.open_token_moniker_viewer, state='disabled')
++        self.btn_token_monikers.pack(side=tk.LEFT, padx=2)
+ 
+         # Main content
+         main = ttk.Frame(self, padding=8)
+@@ -670,7 +673,10 @@
+         info['token_db_generation'] = token_db_generation
+         self.moniker_records = []
+         self.vm_directory_info = None
++        self.token_db_analysis = None
++        self.token_db_data = None
+         self.btn_vm_blocks.config(state='disabled')
++        self.btn_token_monikers.config(state='disabled')
+         self.btn_export_index.config(state='disabled')
+         self.btn_gallery.config(state='disabled')
+         self.btn_app_gallery.config(state='disabled')
+@@ -700,12 +706,19 @@
+                     self.vm_directory_info = parse_pcgeos2_vm_directory(data, path)
+                     self.btn_vm_blocks.config(state='normal')
+                     vm_summary = summarize_vm_directory(self.vm_directory_info)
++                    try:
++                        self.token_db_analysis = analyze_token_database(data, self.vm_directory_info)
++                        self.token_db_data = data
++                        self.btn_token_monikers.config(state='normal')
++                        token_summary = summarize_token_database(self.token_db_analysis)
++                    except TokenDBFormatError as token_exc:
++                        token_summary = 'Token-/Moniker-Auflösung nicht möglich: ' + str(token_exc)
+                     info['user_notes'] = (
+                         'PC/GEOS-2.x-VM-Token-Datenbank erkannt.\n'
+                         'Langname: Token Database.\n'
+                         'VM-Kennung EB AD bei Offset 0x0100.\n\n'
+                         + vm_summary
+-                        + '\n\nToken-/Moniker-/Icon-Datensätze sind noch nicht semantisch dekodiert.'
++                        + '\n\n' + token_summary
+                     )
+                 except TokenDBFormatError as exc:
+                     info['user_notes'] = (
+@@ -1066,6 +1079,128 @@
+             wraplength=860, justify='left'
+         ).pack(fill=tk.X, padx=8, pady=(0,8))
+ 
++    def open_token_moniker_viewer(self):
++        """Browse resolved TokenEntry and DB moniker references for PC/GEOS 2.x."""
++        analysis = getattr(self, 'token_db_analysis', None)
++        if analysis is None:
++            messagebox.showinfo('Token/Moniker', 'Für diese Datei liegt keine geprüfte Token-/Moniker-Auflösung vor.')
++            return
++        win = tk.Toplevel(self)
++        win.title('GeoViewPlus – PC/GEOS-2.x Token und Moniker')
++        win.geometry('1120x650')
++        ttk.Label(
++            win,
++            text=(f"{len(analysis.token_entries)} TokenEntry-Datensätze · "
++                  f"{len(analysis.resolved_monikers)} aufgelöste Moniker-Referenzen · "
++                  f"DB-Map 0x{analysis.db_map.vm_handle:04X}"),
++            anchor='w'
++        ).pack(fill=tk.X, padx=8, pady=6)
++        panes = ttk.Panedwindow(win, orient=tk.HORIZONTAL)
++        panes.pack(fill=tk.BOTH, expand=True, padx=8, pady=(0,8))
++        left = ttk.Frame(panes)
++        right = ttk.Frame(panes)
++        panes.add(left, weight=2)
++        panes.add(right, weight=3)
++
++        token_cols = ('token', 'manufacturer', 'group', 'item', 'monikers')
++        token_tree = ttk.Treeview(left, columns=token_cols, show='headings', selectmode='browse')
++        token_heads = {'token':'Token', 'manufacturer':'Hersteller-ID', 'group':'Moniker-Gruppe',
++                       'item':'Moniker-Item', 'monikers':'Varianten'}
++        token_widths = {'token':75, 'manufacturer':95, 'group':105, 'item':95, 'monikers':70}
++        for col in token_cols:
++            token_tree.heading(col, text=token_heads[col])
++            token_tree.column(col, width=token_widths[col], anchor='center')
++        token_scroll = ttk.Scrollbar(left, orient='vertical', command=token_tree.yview)
++        token_tree.configure(yscrollcommand=token_scroll.set)
++        token_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
++        token_scroll.pack(side=tk.RIGHT, fill=tk.Y)
++
++        moniker_cols = ('type', 'group', 'item', 'vm_type', 'size', 'payload', 'gstring')
++        moniker_tree = ttk.Treeview(right, columns=moniker_cols, show='headings', selectmode='browse')
++        moniker_heads = {'type':'Listen-Typ', 'group':'Zielgruppe', 'item':'Zielitem',
++                         'vm_type':'Moniker-Typ', 'size':'Abmessungen', 'payload':'Datenbytes',
++                         'gstring':'GString'}
++        moniker_widths = {'type':90, 'group':95, 'item':85, 'vm_type':95, 'size':105, 'payload':90, 'gstring':75}
++        for col in moniker_cols:
++            moniker_tree.heading(col, text=moniker_heads[col])
++            moniker_tree.column(col, width=moniker_widths[col], anchor='center')
++        moniker_scroll = ttk.Scrollbar(right, orient='vertical', command=moniker_tree.yview)
++        moniker_tree.configure(yscrollcommand=moniker_scroll.set)
++        moniker_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
++        moniker_scroll.pack(side=tk.RIGHT, fill=tk.Y)
++
++        resolved_by_token = {}
++        for resolved in analysis.resolved_monikers:
++            resolved_by_token.setdefault(resolved.token_index, []).append(resolved)
++        token_by_iid = {}
++        for token in analysis.token_entries:
++            variants = len(analysis.moniker_lists.get((token.moniker_group, token.moniker_item), ()))
++            iid = token_tree.insert('', 'end', values=(
++                token.token_text, f'0x{token.manufacturer_id:04X}',
++                f'0x{token.moniker_group:04X}', f'0x{token.moniker_item:04X}', variants
++            ))
++            token_by_iid[iid] = token
++
++        selected_resolved = {}
++        def choose_token(_event=None):
++            selection = token_tree.selection()
++            if not selection:
++                return
++            token = token_by_iid.get(selection[0])
++            if token is None:
++                return
++            moniker_tree.delete(*moniker_tree.get_children())
++            selected_resolved.clear()
++            for resolved in resolved_by_token.get(token.index, []):
++                header = resolved.header
++                vm_type = f'0x{header.type_byte:02X}' if header else '—'
++                size = f'{header.width} × {header.height}' if header else '—'
++                payload = header.payload_size if header else len(resolved.db_item.payload)
++                iid = moniker_tree.insert('', 'end', values=(
++                    f'0x{resolved.list_entry.type_word:04X}',
++                    f'0x{resolved.list_entry.group_handle:04X}',
++                    f'0x{resolved.list_entry.item_handle:04X}',
++                    vm_type, size, payload,
++                    'ja' if header and header.is_gstring else 'nein'
++                ))
++                selected_resolved[iid] = resolved
++
++        def export_selected():
++            selection = moniker_tree.selection()
++            if not selection:
++                messagebox.showinfo('Moniker-Rohdaten', 'Bitte zuerst einen Moniker auswählen.')
++                return
++            resolved = selected_resolved.get(selection[0])
++            if resolved is None:
++                return
++            token = resolved.token_chars.decode('latin-1', errors='replace').strip() or 'TOKEN'
++            out = filedialog.asksaveasfilename(
++                title='Moniker-Rohdaten speichern', defaultextension='.bin',
++                initialfile=f'{token}_moniker_{resolved.list_entry.group_handle:04X}_{resolved.list_entry.item_handle:04X}.bin',
++                filetypes=[('Binärdatei', '*.bin'), ('Alle Dateien', '*.*')]
++            )
++            if not out:
++                return
++            try:
++                with open(out, 'wb') as f:
++                    f.write(resolved.db_item.payload)
++                self.status.config(text=f'Moniker-Rohdaten exportiert: {out}')
++            except OSError as exc:
++                messagebox.showerror('Exportfehler', str(exc))
++
++        token_tree.bind('<<TreeviewSelect>>', choose_token)
++        ttk.Button(right, text='Ausgewählte Moniker-Rohdaten speichern…', command=export_selected).pack(fill=tk.X, pady=(8,0))
++        ttk.Label(
++            win,
++            text='Die Rohdaten werden unverändert exportiert. Alpha99 löst die DB-Referenzen und VisMoniker-Köpfe auf; die GString-/Bitmap-Dekodierung folgt in Alpha100.',
++            wraplength=1080, justify='left'
++        ).pack(fill=tk.X, padx=8, pady=(0,8))
++        if token_tree.get_children():
++            first = token_tree.get_children()[0]
++            token_tree.selection_set(first)
++            token_tree.focus(first)
++            choose_token()
++
+     def export_moniker_index(self):
+         if not getattr(self, 'moniker_records', None):
+             messagebox.showinfo('Moniker-Index', 'Keine Moniker-Kandidaten vorhanden.')
