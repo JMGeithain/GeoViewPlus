@@ -1,0 +1,47 @@
+{
+  "release": "GeoViewPlus 0.5 Alpha99",
+  "source_file": "token_da(2).000",
+  "source_file_uploaded": false,
+  "file_size": 522008,
+  "sha256": "76f1fb554111623b0616d139f29976087f3a8cb9b8dc722a8e45c4c18ae9da73",
+  "db_map_block": {
+    "vm_handle": "0x00D4",
+    "words": ["0x00D4", "0x3030", "0x008C", "0x000E", "0x00F8", "0x0000"],
+    "map_group": "0x008C",
+    "map_item": "0x000E"
+  },
+  "token_map_item": {
+    "item_block_vm_handle": "0x00B0",
+    "lmem_chunk_handle": "0x0014",
+    "chunk_offset": "0x0056",
+    "chunk_payload_bytes": 6456,
+    "token_entry_size": 24,
+    "dummy_entries": 1,
+    "token_entries": 268
+  },
+  "moniker_map": {
+    "group_handle": "0x0068",
+    "item_block_vm_handle": "0x011C",
+    "token_moniker_lists": 268,
+    "resolved_moniker_references": 1081,
+    "unresolved_references": 0,
+    "list_entry_size": 6,
+    "list_length_distribution": {
+      "1": 19, "2": 59, "3": 50, "4": 59, "5": 33, "6": 10,
+      "7": 13, "8": 8, "9": 4, "10": 3, "11": 9, "13": 1
+    }
+  },
+  "desk_token_variants": [
+    {"list_type":"0x23C6","group":"0x0140","item":"0x000E","vis_type":"0x46","width":64,"height":40},
+    {"list_type":"0x23C1","group":"0x0188","item":"0x000E","vis_type":"0x41","width":64,"height":40},
+    {"list_type":"0x13C6","group":"0x01D0","item":"0x000E","vis_type":"0x46","width":48,"height":30},
+    {"list_type":"0x13C1","group":"0x0218","item":"0x000E","vis_type":"0x41","width":48,"height":30},
+    {"list_type":"0x03C6","group":"0x0260","item":"0x000E","vis_type":"0x46","width":32,"height":20},
+    {"list_type":"0x03C1","group":"0x02A8","item":"0x000E","vis_type":"0x41","width":32,"height":20},
+    {"list_type":"0x03E1","group":"0x02F0","item":"0x000E","vis_type":"0x61","width":48,"height":14},
+    {"list_type":"0x04C1","group":"0x0338","item":"0x000E","vis_type":"0x41","width":15,"height":15},
+    {"list_type":"0x04E1","group":"0x0380","item":"0x000E","vis_type":"0x61","width":15,"height":10}
+  ],
+  "tests": {"passed":16,"failed":0},
+  "next_step": "Alpha100: inspect and decode GString/bitmap payloads"
+}
