@@ -1,0 +1,11 @@
+GeoViewPlus 0.5 Alpha103 – Testprotokoll
+
+Kommando:
+GEOVIEWPLUS_TOKEN_DB_SAMPLE='/mnt/data/token_da(2).000' python -m unittest -v test_geoviewplus_bitmap_raster.py test_geoviewplus_palette_png.py test_geoviewplus_desk_moniker.py test_geoviewplus_gstring_bitmap.py test_token_db_v2_vm_directory.py test_token_db_v2_database.py test_token_db_detection.py
+
+Ergebnis:
+Ran 39 tests in 0.089s
+OK
+
+Alle optionalen Integrationstests liefen mit der gesetzten privaten Testdatenbank ebenfalls erfolgreich.
+Die private Token-Datenbank und die PC/GEOS-Installationsarchive sind nicht im Paket enthalten.
