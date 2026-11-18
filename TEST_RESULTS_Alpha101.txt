@@ -1,0 +1,7 @@
+29 Tests bestanden, 0 fehlgeschlagen.
+5 Alpha101-Tests einschließlich Integration aller neun realen DESK-Moniker.
+8 Alpha100 GString-/PackBits-Tests.
+5 VM-Verzeichnis-Tests.
+8 TokenDB-/Moniker-Auflösungstests.
+3 Dateiformat-Erkennungstests.
+Eingabedatei token_da(2).000 nur lesend verwendet; nicht veröffentlicht.
