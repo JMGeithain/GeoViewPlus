@@ -1,0 +1,110 @@
+--- GeoViewPlus.py (Alpha97)
++++ GeoViewPlus.py (Alpha98)
+@@ -39,6 +39,7 @@
+ from collections import Counter, defaultdict
+ 
+ from geoworks1_app_monikers import parse_v1_resources, scan_app_monikers, render_app_moniker
++from geoviewplus_token_db_v2 import parse_pcgeos2_vm_directory, summarize_vm_directory, TokenDBFormatError
+ 
+ # GeoWorks 1.x 4-bit palette recovered from WORLD/DUMP.GEO (mapPixels):
+ # RGB components are 4-bit values 0, 5, 10, 15; scale by 17 for 8-bit RGB.
+@@ -586,6 +587,8 @@
+         self.btn_gallery.pack(side=tk.LEFT, padx=2)
+         self.btn_app_gallery = ttk.Button(toolbar, text='App-Icons…', command=self.open_app_moniker_gallery, state='disabled')
+         self.btn_app_gallery.pack(side=tk.LEFT, padx=2)
++        self.btn_vm_blocks = ttk.Button(toolbar, text='VM-Blöcke…', command=self.open_vm_directory_viewer, state='disabled')
++        self.btn_vm_blocks.pack(side=tk.LEFT, padx=2)
+ 
+         # Main content
+         main = ttk.Frame(self, padding=8)
+@@ -666,6 +669,8 @@
+         info['is_token_db'] = is_token_db
+         info['token_db_generation'] = token_db_generation
+         self.moniker_records = []
++        self.vm_directory_info = None
++        self.btn_vm_blocks.config(state='disabled')
+         self.btn_export_index.config(state='disabled')
+         self.btn_gallery.config(state='disabled')
+         self.btn_app_gallery.config(state='disabled')
+@@ -691,14 +696,23 @@
+                     + summarize_token_db_monikers(self.moniker_records)
+                 )
+             else:
+-                info['user_notes'] = (
+-                    'PC/GEOS-2.x-VM-Token-Datenbank erkannt.\n'
+-                    'Langname: Token Database.\n'
+-                    'VM-Kennung EB AD bei Offset 0x0100.\n'
+-                    'Die gelieferten 2.x-Daten verwenden nicht das GeoWorks-1.x-Monikerformat; '
+-                    'die 1.x-Signatursuche wird deshalb nicht darauf angewendet.\n'
+-                    'VM-Block-/Token-Verzeichnis und Icon-Datensätze sind noch zu analysieren.'
+-                )
++                try:
++                    self.vm_directory_info = parse_pcgeos2_vm_directory(data, path)
++                    self.btn_vm_blocks.config(state='normal')
++                    vm_summary = summarize_vm_directory(self.vm_directory_info)
++                    info['user_notes'] = (
++                        'PC/GEOS-2.x-VM-Token-Datenbank erkannt.\n'
++                        'Langname: Token Database.\n'
++                        'VM-Kennung EB AD bei Offset 0x0100.\n\n'
++                        + vm_summary
++                        + '\n\nToken-/Moniker-/Icon-Datensätze sind noch nicht semantisch dekodiert.'
++                    )
++                except TokenDBFormatError as exc:
++                    info['user_notes'] = (
++                        'PC/GEOS-2.x-Token-Datenbank erkannt, aber das VM-Verzeichnis konnte nicht sicher gelesen werden.\n'
++                        f'Diagnose: {exc}'
++                    )
++
+         # GeoWorks 1.x: echte App-Moniker aus den LMem-Ressourcen der GEO-Datei.
+         self.app_moniker_records = []
+         if info.get('valid') and info.get('version') == 1 and not is_token_db:
+@@ -1009,6 +1023,49 @@
+         ttk.Button(right,text='Ausgewählte Grafik als PNG speichern…',command=export).pack(fill=tk.X,pady=(8,0))
+         refresh()
+ 
++    def open_vm_directory_viewer(self):
++        """Show validated PC/GEOS 2.x VM-directory entries without semantic guesses."""
++        info = getattr(self, 'vm_directory_info', None)
++        if info is None:
++            messagebox.showinfo('VM-Blöcke', 'Für diese Datei liegt kein geprüftes VM-Verzeichnis vor.')
++            return
++        win = tk.Toplevel(self)
++        win.title('GeoViewPlus – PC/GEOS-2.x VM-Blöcke')
++        win.geometry('900x560')
++        ttk.Label(
++            win,
++            text=(f"Directory 0x{info.directory_file_offset:X} · "
++                  f"{len(info.allocated_entries)} belegte Blöcke · "
++                  f"Map-Handle 0x{info.map_block_handle:04X} · "
++                  f"DB-Map-Handle 0x{info.db_map_block_handle:04X}"),
++            anchor='w'
++        ).pack(fill=tk.X, padx=8, pady=6)
++        columns = ('index', 'vm_handle', 'memory_handle', 'user_id', 'flags', 'size', 'file_offset')
++        tree = ttk.Treeview(win, columns=columns, show='headings')
++        headings = {'index':'Index', 'vm_handle':'VM-Handle', 'memory_handle':'Mem-Handle',
++                    'user_id':'User-ID', 'flags':'Flags', 'size':'Größe', 'file_offset':'Datei-Offset'}
++        widths = {'index':65, 'vm_handle':95, 'memory_handle':105, 'user_id':90,
++                  'flags':80, 'size':85, 'file_offset':115}
++        for col in columns:
++            tree.heading(col, text=headings[col])
++            tree.column(col, width=widths[col], anchor='center')
++        yscroll = ttk.Scrollbar(win, orient='vertical', command=tree.yview)
++        tree.configure(yscrollcommand=yscroll.set)
++        tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(8,0), pady=(0,8))
++        yscroll.pack(side=tk.RIGHT, fill=tk.Y, pady=(0,8))
++        for entry in info.allocated_entries:
++            tree.insert('', 'end', values=(
++                entry.index, f'0x{entry.vm_handle:04X}', f'0x{entry.memory_handle:04X}',
++                f'0x{entry.user_id:04X}', f'0x{entry.flags:04X}', f'0x{entry.size:04X}',
++                f'0x{entry.file_offset:06X}'
++            ))
++        ttk.Label(
++            win,
++            text='User-IDs und Blockinhalte werden hier bewusst nur numerisch angezeigt; '
++                 'die Zuordnung zu Token-Einträgen und Icons ist noch Gegenstand der Analyse.',
++            wraplength=860, justify='left'
++        ).pack(fill=tk.X, padx=8, pady=(0,8))
++
+     def export_moniker_index(self):
+         if not getattr(self, 'moniker_records', None):
+             messagebox.showinfo('Moniker-Index', 'Keine Moniker-Kandidaten vorhanden.')
