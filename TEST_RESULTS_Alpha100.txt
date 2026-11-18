@@ -1,0 +1,11 @@
+24 tests passed, 0 failed.
+
+- 8 Alpha100 GString/PackBits tests (including real DESK moniker integration)
+- 5 VM-directory tests
+- 8 Token DB / moniker-resolution tests
+- 3 format-detection tests
+
+Command:
+GEOVIEWPLUS_TOKEN_DB_SAMPLE=/mnt/data/token_da(2).000 python -m unittest -v test_geoviewplus_gstring_bitmap.py test_token_db_v2_vm_directory.py test_token_db_v2_database.py test_token_db_detection.py
+
+Input Token DB was read only. It was not included in the repository or package.
