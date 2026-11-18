@@ -1,0 +1,18 @@
+GeoViewPlus 0.5 – Alpha99 Testprotokoll
+Datum: 18.11.2026
+
+Befehl:
+GEOVIEWPLUS_TOKEN_DB_SAMPLE="token_da(2).000" python -m unittest -v test_token_db_v2_vm_directory.py test_token_db_v2_database.py test_token_db_detection.py
+
+Ergebnis: 16 Tests bestanden, 0 fehlgeschlagen.
+
+Abgedeckt:
+- PC/GEOS-2.x VM-Directory und ungültige Header/Zeiger
+- DBMapBlock-Felder und Handle-Konsistenz
+- TokenEntry-Größe (24 Byte) und Dummy-Eintrag
+- Monikerlisten-Einträge (6 Byte)
+- VisMoniker-Kopf (Typbyte, Breite, Höhe)
+- echte token_da(2).000 Integration: 268 TokenEntry-Datensätze, 1.081 aufgelöste Moniker-Referenzen, 9 DESK-Varianten
+- bestehende GeoWorks-1.x- und PC/GEOS-2.x-TokenDB-Erkennung
+
+Die Originaldatei wurde nur lesend geöffnet und nicht in das Repository übernommen.
