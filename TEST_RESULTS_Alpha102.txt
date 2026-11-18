@@ -1,0 +1,15 @@
+GeoViewPlus 0.5 Alpha102 – Testprotokoll
+
+Ergebnis:
+Ran 34 tests in 0.097s
+OK
+
+Bestandteile:
+- 5 Bitmap-Rastertests (einschließlich Integration aller neun DESK-Varianten)
+- 5 DESK-GStringtests
+- 8 GString-/PackBits-Tests
+- 5 VM-Verzeichnis-Tests
+- 8 Token-DB-/Moniker-Tests
+- 3 Format-Erkennungstests
+
+Private Token-Datenbank wurde nur gelesen und nicht in das Paket aufgenommen.
