@@ -1,0 +1,691 @@
+"""GeoViewPlus – GEOS / GeoWorks File Information Viewer for Windows.
+
+Shows long names, header data and icons of GEOS files from GeoWorks 1.x,
+GEOS 2.x (Ensemble, NewDeal, Breadbox) and FreeGEOS.
+
+Icon sources, in this order:
+  applications: the icon stored in the application itself
+  documents:    the document icon stored in the creating application
+  then:         the token database (TOKEN.DB / TOKEN_DA.000)
+  last:         a standard icon
+
+Idea: GeoView by Rainer Bettsteller (RABE-Soft, 2000).
+Möllerjaner © 2026 Johannes Möller
+"""
+from __future__ import annotations
+
+import os
+import sys
+import time
+import tkinter as tk
+from tkinter import ttk, filedialog, messagebox
+
+from PIL import Image, ImageTk
+
+from geoscore import (TokenDB, parse_header, moniker_rgba, classify_geode_icons,
+                      find_token_db, geos_text)
+
+APP_NAME = 'GeoViewPlus'
+APP_VERSION = '0.5.0'
+LIST_ICON_H = 32           # row height in the file list
+FALLBACK = {'Programm (Geode)': 'gAPP', 'Dokument (VM-Datei)': 'gDAT',
+            'Daten-Datei': 'FILE', 'Verzeichnis': 'FLDR'}
+
+
+def resource_path(name):
+    base = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base, name)
+
+
+def moniker_image(mon, scale=1):
+    w, h, rgba = moniker_rgba(mon)
+    img = Image.frombytes('RGBA', (w, h), rgba)
+    if scale != 1:
+        img = img.resize((w * scale, h * scale), Image.NEAREST)
+    return img
+
+
+def fit_row(img, height=LIST_ICON_H, width=52):
+    """Center an icon in a fixed cell so the list stays aligned."""
+    cell = Image.new('RGBA', (width, height), (0, 0, 0, 0))
+    if img.height > height or img.width > width:
+        img = img.copy()
+        img.thumbnail((width, height), Image.NEAREST)
+    cell.paste(img, ((width - img.width) // 2, (height - img.height) // 2), img)
+    return cell
+
+
+def read_head(path, n=0x100):
+    try:
+        with open(path, 'rb') as f:
+            return f.read(n)
+    except OSError:
+        return b''
+
+
+def fmt_size(n):
+    return f'{n:,}'.replace(',', '.') + ' Bytes'
+
+
+def fmt_mtime(t):
+    return time.strftime('%d.%m.%Y %H:%M', time.localtime(t))
+
+# ---------------------------------------------------------------------------
+# Installation context: token database + application index
+# ---------------------------------------------------------------------------
+
+
+class GeosContext:
+    """Everything that belongs to one GEOS installation."""
+
+    def __init__(self):
+        self.root = None
+        self.tokendb = None
+        self.tokendb_path = None
+        self.apps = {}              # (token, manuf) -> path of application
+        self._icons = {}            # app path -> GeodeIcons
+
+    @staticmethod
+    def find_root(folder):
+        """Walk up from folder to the installation root."""
+        cur = os.path.abspath(folder)
+        while True:
+            if find_token_db(cur) or os.path.isfile(os.path.join(cur, 'GEOS.INI')) \
+                    or os.path.isfile(os.path.join(cur, 'geos.ini')):
+                return cur
+            parent = os.path.dirname(cur)
+            if parent == cur:
+                return None
+            cur = parent
+
+    def open_for(self, folder, progress=None):
+        root = self.find_root(folder) or os.path.abspath(folder)
+        if root == self.root:
+            return
+        self.root = root
+        self.apps.clear()
+        self._icons.clear()
+        db = find_token_db(root)
+        self.load_tokendb(db)
+        n = 0
+        for dp, dirs, files in os.walk(root):
+            dirs[:] = [d for d in dirs if d.upper() not in ('DOSROOM', 'SPOOL', 'CACHE', 'WASTE')]
+            for name in files:
+                if name.lower().endswith('.geo'):
+                    p = os.path.join(dp, name)
+                    h = parse_header(read_head(p))
+                    if h and h.type_name.startswith('Programm'):
+                        self.apps.setdefault((h.token, h.token_manuf), p)
+                n += 1
+                if progress and n % 200 == 0:
+                    progress(n)
+
+    def load_tokendb(self, path):
+        self.tokendb, self.tokendb_path = None, None
+        if path:
+            try:
+                self.tokendb = TokenDB(path)
+                self.tokendb_path = path
+            except Exception:
+                pass
+
+    def geode_icons(self, path):
+        if path not in self._icons:
+            try:
+                with open(path, 'rb') as f:
+                    self._icons[path] = classify_geode_icons(f.read())
+            except Exception:
+                self._icons[path] = None
+        return self._icons[path]
+
+    def resolve(self, path, h):
+        """Return (icon list or token entry, moniker list owner text, source)."""
+        if h.type_name.startswith('Programm'):
+            gi = self.geode_icons(path)
+            if gi and gi.app and gi.app.best_icon():
+                return gi.app, 'aus der App selbst'
+        elif h.creator.strip('\0 '):
+            app = self.apps.get((h.creator, h.creator_manuf)) or next(
+                (p for (t, m), p in self.apps.items() if t == h.creator), None)
+            if app:
+                gi = self.geode_icons(app)
+                l = gi.for_token(h.token, h.token_manuf) if gi else None
+                if l and l.best_icon():
+                    return l, f'Dokument-Icon aus {os.path.basename(app)}'
+        if self.tokendb and h.token.strip('\0 '):
+            e = self.tokendb.lookup(h.token, h.token_manuf)
+            if e and e.best_icon():
+                return e, 'aus der Token-Datenbank'
+        return self.standard(h.type_name), 'Standard-Icon'
+
+    def standard(self, type_name):
+        if self.tokendb:
+            e = self.tokendb.lookup(FALLBACK.get(type_name, 'FILE'))
+            if e and e.best_icon():
+                return e
+        return None
+
+# ---------------------------------------------------------------------------
+# Main window
+# ---------------------------------------------------------------------------
+
+
+class GeoViewPlus(tk.Tk):
+    COLUMNS = (('dos', 'DOS-Name', 110), ('type', 'Typ', 150), ('token', 'Token', 80),
+               ('creator', 'Ersteller', 80), ('size', 'Größe', 90), ('mtime', 'Geändert', 115))
+
+    def __init__(self, start=None):
+        super().__init__()
+        self.title(f'{APP_NAME} {APP_VERSION}')
+        self.geometry('1180x720')
+        self.minsize(900, 520)
+        try:
+            self.iconbitmap(resource_path('geoworks_motif_icon.ico'))
+        except Exception:
+            pass
+        self.ctx = GeosContext()
+        self.folder = None
+        self.items = {}             # tree iid -> dict
+        self._img_refs = {}         # keep PhotoImages alive
+        self._detail_imgs = []
+        self._pending = []
+        self.only_geos = tk.BooleanVar(value=True)
+        self._build_menu()
+        self._build_ui()
+        if start:
+            self.after(50, lambda: self.open_path(start))
+
+    # ---------------- UI construction ----------------
+    def _build_menu(self):
+        m = tk.Menu(self)
+        f = tk.Menu(m, tearoff=False)
+        f.add_command(label='Ordner öffnen …', accelerator='Strg+O', command=self.ask_folder)
+        f.add_command(label='Datei öffnen …', command=self.ask_file)
+        f.add_separator()
+        f.add_command(label='Token-Datenbank wählen …', command=self.ask_tokendb)
+        f.add_separator()
+        f.add_command(label='Beenden', command=self.destroy)
+        m.add_cascade(label='Datei', menu=f)
+        v = tk.Menu(m, tearoff=False)
+        v.add_checkbutton(label='Nur GEOS-Dateien anzeigen', variable=self.only_geos,
+                          command=self.refresh)
+        v.add_command(label='Aktualisieren', accelerator='F5', command=self.refresh)
+        m.add_cascade(label='Ansicht', menu=v)
+        x = tk.Menu(m, tearoff=False)
+        x.add_command(label='Token-Datenbank durchsehen …', command=self.show_tokendb)
+        m.add_cascade(label='Extras', menu=x)
+        h = tk.Menu(m, tearoff=False)
+        h.add_command(label=f'Über {APP_NAME} …', command=self.show_about)
+        m.add_cascade(label='Hilfe', menu=h)
+        self.config(menu=m)
+        self.bind('<Control-o>', lambda e: self.ask_folder())
+        self.bind('<F5>', lambda e: self.refresh())
+
+    def _build_ui(self):
+        style = ttk.Style(self)
+        style.configure('Files.Treeview', rowheight=LIST_ICON_H + 4)
+        style.configure('Big.TLabel', font=('Segoe UI', 13, 'bold'))
+        style.configure('Head.TLabel', foreground='#555')
+
+        top = ttk.Frame(self, padding=(8, 6))
+        top.pack(fill='x')
+        ttk.Button(top, text='Ordner öffnen …', command=self.ask_folder).pack(side='left')
+        ttk.Button(top, text='▲ übergeordnet', command=self.go_up).pack(side='left', padx=(6, 0))
+        self.path_var = tk.StringVar()
+        e = ttk.Entry(top, textvariable=self.path_var)
+        e.pack(side='left', fill='x', expand=True, padx=8)
+        e.bind('<Return>', lambda ev: self.open_path(self.path_var.get()))
+
+        pane = ttk.PanedWindow(self, orient='horizontal')
+        pane.pack(fill='both', expand=True, padx=8, pady=(0, 4))
+
+        left = ttk.Frame(pane)
+        self.tree = ttk.Treeview(left, style='Files.Treeview',
+                                 columns=[c[0] for c in self.COLUMNS], selectmode='browse')
+        self.tree.heading('#0', text='GEOS-Name', command=lambda: self.sort_by('#0'))
+        self.tree.column('#0', width=300, minwidth=180)
+        for key, title, width in self.COLUMNS:
+            self.tree.heading(key, text=title, command=lambda k=key: self.sort_by(k))
+            self.tree.column(key, width=width, minwidth=50,
+                             anchor='e' if key == 'size' else 'w')
+        sb = ttk.Scrollbar(left, orient='vertical', command=self.tree.yview)
+        self.tree.configure(yscrollcommand=sb.set)
+        self.tree.pack(side='left', fill='both', expand=True)
+        sb.pack(side='left', fill='y')
+        self.tree.bind('<<TreeviewSelect>>', lambda e: self.show_detail())
+        self.tree.bind('<Double-1>', self.on_double)
+        self.tree.bind('<Return>', self.on_double)
+        self.tree.bind('<BackSpace>', lambda e: self.go_up())
+        pane.add(left, weight=3)
+
+        right = ttk.Frame(pane, padding=(10, 0, 0, 0))
+        pane.add(right, weight=2)
+        self._build_detail(right)
+        self.after(100, lambda: pane.sashpos(0, int(self.winfo_width() * 0.58)))
+
+        self.status = tk.StringVar(value='Bitte einen Ordner öffnen.')
+        ttk.Label(self, textvariable=self.status, relief='sunken', anchor='w',
+                  padding=(6, 2)).pack(fill='x', side='bottom')
+
+    def _build_detail(self, parent):
+        head = ttk.Frame(parent)
+        head.pack(fill='x', pady=(4, 8))
+        self.big_icon = tk.Label(head, bg='#c0c0c0', width=140, height=88, bd=1, relief='sunken')
+        self.big_icon.pack(side='left')
+        hd = ttk.Frame(head, padding=(10, 0, 0, 0))
+        hd.pack(side='left', fill='both', expand=True)
+        self.d_name = ttk.Label(hd, text='', style='Big.TLabel', wraplength=300)
+        self.d_name.pack(anchor='w')
+        self.d_src = ttk.Label(hd, text='', foreground='#2c6e2c', wraplength=300)
+        self.d_src.pack(anchor='w', pady=(4, 0))
+
+        grid = ttk.Frame(parent)
+        grid.pack(fill='x')
+        self.fields = {}
+        rows = ['Pfad', 'DOS-Name', 'Datei-Typ', 'GEOS-Version', 'Token', 'Ersteller',
+                'Release', 'Protokoll', 'Größe', 'Erstellt', 'Letzte Änderung', 'Copyright']
+        for i, r in enumerate(rows):
+            ttk.Label(grid, text=r + ':', style='Head.TLabel').grid(row=i, column=0, sticky='ne', padx=(0, 8))
+            v = ttk.Label(grid, text='', wraplength=330, justify='left')
+            v.grid(row=i, column=1, sticky='nw')
+            self.fields[r] = v
+        grid.columnconfigure(1, weight=1)
+
+        ttk.Label(parent, text='Datei-Notizen:', style='Head.TLabel').pack(anchor='w', pady=(8, 0))
+        self.notes = tk.Text(parent, height=3, wrap='word', relief='flat', bg='#ececec',
+                             font=('Segoe UI', 9))
+        self.notes.pack(fill='x')
+        self.notes.configure(state='disabled')
+
+        bar = ttk.Frame(parent)
+        bar.pack(fill='x', pady=(8, 2))
+        ttk.Label(bar, text='Icon-Varianten:', style='Head.TLabel').pack(side='left')
+        ttk.Button(bar, text='Als ICO …', command=lambda: self.save_icon('ico')).pack(side='right')
+        ttk.Button(bar, text='Als PNG …', command=lambda: self.save_icon('png')).pack(side='right', padx=4)
+
+        gal = ttk.Frame(parent)
+        gal.pack(fill='both', expand=True)
+        self.gallery = tk.Canvas(gal, bg='#c0c0c0', highlightthickness=0, height=150)
+        gsb = ttk.Scrollbar(gal, orient='vertical', command=self.gallery.yview)
+        self.gallery.configure(yscrollcommand=gsb.set)
+        self.gallery.pack(side='left', fill='both', expand=True)
+        gsb.pack(side='left', fill='y')
+        self.gallery.bind('<Configure>', lambda e: self._layout_gallery())
+        self._gallery_items = []
+        self.selected_moniker = None
+
+    # ---------------- navigation ----------------
+    def ask_folder(self):
+        d = filedialog.askdirectory(title='GEOS-Ordner öffnen', initialdir=self.folder or None)
+        if d:
+            self.open_path(d)
+
+    def ask_file(self):
+        f = filedialog.askopenfilename(title='GEOS-Datei öffnen', initialdir=self.folder or None,
+                                       filetypes=[('GEOS-Dateien', '*.GEO *.000 *.001 *.002 *.DB *.VM'),
+                                                  ('Alle Dateien', '*.*')])
+        if f:
+            self.open_path(f)
+
+    def ask_tokendb(self):
+        f = filedialog.askopenfilename(title='Token-Datenbank wählen',
+                                       filetypes=[('Token-Datenbank', 'TOKEN.DB TOKEN_DA.000 *.DB *.000'),
+                                                  ('Alle Dateien', '*.*')])
+        if f:
+            self.ctx.load_tokendb(f)
+            if not self.ctx.tokendb:
+                messagebox.showerror(APP_NAME, 'Diese Datei ist keine lesbare Token-Datenbank.')
+            self.refresh()
+
+    def go_up(self):
+        if self.folder:
+            parent = os.path.dirname(self.folder)
+            if parent != self.folder:
+                self.open_path(parent, select=self.folder)
+
+    def on_double(self, event=None):
+        sel = self.tree.selection()
+        if sel:
+            it = self.items.get(sel[0])
+            if it and it['isdir']:
+                self.open_path(it['path'])
+
+    def open_path(self, path, select=None):
+        path = os.path.abspath(path.strip().strip('"'))
+        if os.path.isfile(path):
+            select = path
+            path = os.path.dirname(path)
+        if not os.path.isdir(path):
+            messagebox.showerror(APP_NAME, f'Ordner nicht gefunden:\n{path}')
+            return
+        self.folder = path
+        self.path_var.set(path)
+        self.status.set('Lese Installation …')
+        self.config(cursor='watch')
+        self.update_idletasks()
+        try:
+            self.ctx.open_for(path, progress=lambda n: (self.status.set(f'Lese Installation … {n} Dateien'),
+                                                         self.update_idletasks()))
+        finally:
+            self.config(cursor='')
+        self.refresh(select)
+
+    # ---------------- listing ----------------
+    def refresh(self, select=None):
+        if not self.folder:
+            return
+        self.tree.delete(*self.tree.get_children())
+        self.items.clear()
+        self._img_refs.clear()
+        self._pending.clear()
+        try:
+            names = os.listdir(self.folder)
+        except OSError as ex:
+            messagebox.showerror(APP_NAME, str(ex))
+            return
+        dirs, files = [], []
+        for n in names:
+            p = os.path.join(self.folder, n)
+            (dirs if os.path.isdir(p) else files).append((n, p))
+        n_geos = 0
+        for n, p in sorted(dirs, key=lambda x: x[0].lower()):
+            label = parse_header(read_head(os.path.join(p, '@DIRNAME.000')))
+            long_name = label.long_name if label and label.long_name else n
+            iid = self.tree.insert('', 'end', text='  ' + long_name,
+                                   values=(n, 'Ordner', '', '', '', fmt_mtime(os.path.getmtime(p))))
+            self.items[iid] = dict(path=p, isdir=True, header=label, name=n, long=long_name)
+            self._pending.append(iid)
+        for n, p in sorted(files, key=lambda x: x[0].lower()):
+            h = parse_header(read_head(p))
+            if not h and self.only_geos.get():
+                continue
+            st = os.stat(p)
+            if h:
+                n_geos += 1
+                tok = h.token.strip('\0 ')
+                vals = (n, f'{h.version}.x · {h.type_name}', f'{tok}/{h.token_manuf}' if tok else '',
+                        f'{h.creator.strip(chr(0))}/{h.creator_manuf}' if h.creator.strip('\0 ') else '',
+                        fmt_size(st.st_size).replace(' Bytes', ''), fmt_mtime(st.st_mtime))
+                text = h.long_name or n
+            else:
+                vals = (n, 'DOS-Datei', '', '', fmt_size(st.st_size).replace(' Bytes', ''),
+                        fmt_mtime(st.st_mtime))
+                text = n
+            iid = self.tree.insert('', 'end', text='  ' + text, values=vals)
+            self.items[iid] = dict(path=p, isdir=False, header=h, name=n, long=text,
+                                   size=st.st_size, mtime=st.st_mtime)
+            if h:
+                self._pending.append(iid)
+        db = os.path.relpath(self.ctx.tokendb_path, self.ctx.root) if self.ctx.tokendb_path else 'keine'
+        self.status.set(f'{n_geos} GEOS-Dateien · {len(dirs)} Ordner · Installation: {self.ctx.root} · '
+                        f'Token-Datenbank: {db} · {len(self.ctx.apps)} Apps gefunden')
+        target = None
+        for iid, it in self.items.items():
+            if select and os.path.normcase(it['path']) == os.path.normcase(select):
+                target = iid
+        kids = self.tree.get_children()
+        if target or kids:
+            t = target or kids[0]
+            self.tree.selection_set(t)
+            self.tree.focus(t)
+            self.tree.see(t)
+        self.after(1, self._load_icons)
+
+    def _load_icons(self):
+        """Resolve icons in small batches so the window stays responsive."""
+        batch, self._pending = self._pending[:15], self._pending[15:]
+        for iid in batch:
+            it = self.items.get(iid)
+            if not it:
+                continue
+            if it['isdir']:
+                owner, src = self.ctx.standard('Verzeichnis'), 'Ordner-Symbol'
+            else:
+                owner, src = self.ctx.resolve(it['path'], it['header'])
+            it['owner'], it['source'] = owner, src
+            mon = owner.best_icon(prefer=(1, 0, 2, 3)) if owner else None
+            if mon:
+                photo = ImageTk.PhotoImage(fit_row(moniker_image(mon)))
+                self._img_refs[iid] = photo
+                self.tree.item(iid, image=photo)
+            if iid in self.tree.selection():
+                self.show_detail()
+        if self._pending:
+            self.after(1, self._load_icons)
+
+    def sort_by(self, key):
+        rev = getattr(self, '_sort', (None, False))
+        rev = not rev[1] if rev[0] == key else False
+        self._sort = (key, rev)
+
+        def k(iid):
+            it = self.items[iid]
+            if key == '#0':
+                v = it['long'].lower()
+            elif key == 'size':
+                v = it.get('size', -1)
+            elif key == 'mtime':
+                v = it.get('mtime', 0)
+            else:
+                v = str(self.tree.set(iid, key)).lower()
+            return (not it['isdir'], v)
+        order = sorted(self.tree.get_children(), key=k, reverse=rev)
+        if rev:   # keep folders on top
+            order = [i for i in order if self.items[i]['isdir']] + [i for i in order if not self.items[i]['isdir']]
+        for i, iid in enumerate(order):
+            self.tree.move(iid, '', i)
+
+    # ---------------- detail panel ----------------
+    def show_detail(self):
+        sel = self.tree.selection()
+        if not sel:
+            return
+        it = self.items[sel[0]]
+        h = it['header']
+        owner = it.get('owner')
+        mon = owner.best_icon(prefer=(2, 1, 0, 3)) if owner else None
+        self._detail_imgs = []
+        if mon:
+            img = moniker_image(mon, 2 if mon.bitmap[0] <= 64 else 1)
+            ph = ImageTk.PhotoImage(img)
+            self._detail_imgs.append(ph)
+            self.big_icon.configure(image=ph, width=max(140, img.width + 8), height=max(88, img.height + 8))
+        else:
+            self.big_icon.configure(image='')
+        self.d_name.configure(text=it['long'])
+        self.d_src.configure(text=('Icon: ' + it['source']) if it.get('source') else '',
+                             foreground='#a00' if 'Standard' in it.get('source', '') else
+                             '#555' if 'Datenbank' in it.get('source', '') else '#2c6e2c')
+        f = self.fields
+        f['Pfad'].configure(text=os.path.dirname(it['path']))
+        f['DOS-Name'].configure(text=it['name'])
+        if it['isdir']:
+            for k in ('Datei-Typ', 'GEOS-Version', 'Token', 'Ersteller', 'Release', 'Protokoll',
+                      'Größe', 'Erstellt', 'Copyright'):
+                f[k].configure(text='')
+            f['Datei-Typ'].configure(text='Ordner' + (' (Langname aus @DIRNAME.000)' if h else ''))
+            f['Letzte Änderung'].configure(text=fmt_mtime(os.path.getmtime(it['path'])))
+            self._set_notes('')
+        elif h:
+            f['Datei-Typ'].configure(text=h.type_name)
+            f['GEOS-Version'].configure(text='GeoWorks 1.x' if h.version == 1 else 'GEOS 2.x / FreeGEOS')
+            tok = h.token.strip('\0 ')
+            f['Token'].configure(text=f'„{tok}“, Hersteller-ID {h.token_manuf}' if tok else '–')
+            f['Ersteller'].configure(text=f'„{h.creator}“, Hersteller-ID {h.creator_manuf}'
+                                     if h.creator.strip('\0 ') else '–')
+            f['Release'].configure(text=h.release_str)
+            f['Protokoll'].configure(text=h.protocol_str)
+            f['Größe'].configure(text=fmt_size(it['size']))
+            f['Erstellt'].configure(text=h.created or '–')
+            f['Letzte Änderung'].configure(text=fmt_mtime(it['mtime']))
+            f['Copyright'].configure(text=h.notice or '–')
+            self._set_notes(h.notes)
+        else:
+            for k in f:
+                if k not in ('Pfad', 'DOS-Name'):
+                    f[k].configure(text='')
+            f['Datei-Typ'].configure(text='DOS-Datei (kein GEOS-Dateikopf)')
+            f['Größe'].configure(text=fmt_size(it['size']))
+            f['Letzte Änderung'].configure(text=fmt_mtime(it['mtime']))
+            self._set_notes('')
+        self._fill_gallery(owner, mon)
+
+    def _set_notes(self, text):
+        self.notes.configure(state='normal')
+        self.notes.delete('1.0', 'end')
+        self.notes.insert('1.0', text)
+        self.notes.configure(state='disabled')
+
+    def _fill_gallery(self, owner, selected):
+        self._gallery_items = []
+        self.selected_moniker = selected
+        if owner:
+            for m in owner.monikers:
+                if m.is_graphic:
+                    self._gallery_items.append((m, ImageTk.PhotoImage(moniker_image(m))))
+        self._layout_gallery()
+
+    def _layout_gallery(self):
+        c = self.gallery
+        c.delete('all')
+        x = y = 8
+        row_h = 0
+        width = max(c.winfo_width(), 200)
+        for i, (m, ph) in enumerate(self._gallery_items):
+            w = max(ph.width(), 86)
+            hgt = ph.height() + 30
+            if x + w > width - 8 and x > 8:
+                x, y = 8, y + row_h + 8
+                row_h = 0
+            tag = f'm{i}'
+            if m is self.selected_moniker:
+                c.create_rectangle(x - 3, y - 3, x + w + 3, y + hgt, outline='#0057b7', width=2, tags=tag)
+            c.create_image(x + w // 2, y + ph.height() // 2, image=ph, tags=tag)
+            label = f'{m.bitmap[0]}×{m.bitmap[1]}\n' + {0: 'S/W', 1: '16 Farben', 2: '256 Farben', 3: '24 Bit'}.get(m.bitmap[2], '')
+            c.create_text(x + w // 2, y + ph.height() + 3, text=label, anchor='n',
+                          font=('Segoe UI', 8), justify='center', tags=tag)
+            c.tag_bind(tag, '<Button-1>', lambda e, mm=m: self._pick(mm))
+            x += w + 12
+            row_h = max(row_h, hgt)
+        c.configure(scrollregion=(0, 0, width, y + row_h + 8))
+
+    def _pick(self, m):
+        self.selected_moniker = m
+        self._layout_gallery()
+
+    def save_icon(self, kind):
+        m = self.selected_moniker
+        sel = self.tree.selection()
+        if not m or not sel:
+            messagebox.showinfo(APP_NAME, 'Bitte zuerst eine Datei mit Icon auswählen.')
+            return
+        it = self.items[sel[0]]
+        base = os.path.splitext(it['name'])[0]
+        name = f'{base}_{m.bitmap[0]}x{m.bitmap[1]}.{kind}'
+        path = filedialog.asksaveasfilename(title='Icon speichern', initialfile=name,
+                                            defaultextension='.' + kind,
+                                            filetypes=[(kind.upper(), '*.' + kind)])
+        if not path:
+            return
+        img = moniker_image(m)
+        if kind == 'png':
+            img.save(path)
+        else:
+            side = max(img.width, img.height)
+            sq = Image.new('RGBA', (side, side), (0, 0, 0, 0))
+            sq.paste(img, ((side - img.width) // 2, (side - img.height) // 2))
+            sizes = [(s, s) for s in (16, 32, 48, 64) if s <= max(side, 16)] or [(side, side)]
+            sq.save(path, sizes=sizes)
+        self.status.set(f'Icon gespeichert: {path}')
+
+    # ---------------- token database browser ----------------
+    def show_tokendb(self):
+        db = self.ctx.tokendb
+        if not db:
+            messagebox.showinfo(APP_NAME, 'Keine Token-Datenbank geladen.\n'
+                                'Bitte einen Ordner einer GEOS-Installation öffnen oder '
+                                'über „Datei → Token-Datenbank wählen“ eine auswählen.')
+            return
+        win = tk.Toplevel(self)
+        win.title(f'Token-Datenbank – {self.ctx.tokendb_path}')
+        win.geometry('720x600')
+        tv = ttk.Treeview(win, style='Files.Treeview', columns=('tok', 'manuf', 'var'))
+        tv.heading('#0', text='Name')
+        tv.heading('tok', text='Token')
+        tv.heading('manuf', text='Hersteller-ID')
+        tv.heading('var', text='Icon-Varianten')
+        tv.column('#0', width=280)
+        tv.column('tok', width=80)
+        tv.column('manuf', width=100)
+        tv.column('var', width=200)
+        sb = ttk.Scrollbar(win, orient='vertical', command=tv.yview)
+        tv.configure(yscrollcommand=sb.set)
+        tv.pack(side='left', fill='both', expand=True)
+        sb.pack(side='left', fill='y')
+        win._imgs = []
+        entries = sorted(db.entries.values(), key=lambda e: (e.token.lower(), e.manuf))
+        state = {'i': 0}
+
+        def fill():
+            for e in entries[state['i']:state['i'] + 40]:
+                mon = e.best_icon(prefer=(1, 0, 2, 3))
+                img = ''
+                if mon:
+                    img = ImageTk.PhotoImage(fit_row(moniker_image(mon)))
+                    win._imgs.append(img)
+                n = sum(1 for m in e.monikers if m.is_graphic)
+                tv.insert('', 'end', text='  ' + (e.name() or '–'), image=img,
+                          values=(e.token, e.manuf, f'{n} Grafiken'))
+            state['i'] += 40
+            if state['i'] < len(entries) and win.winfo_exists():
+                win.after(1, fill)
+        fill()
+
+    # ---------------- about ----------------
+    def show_about(self):
+        d = tk.Toplevel(self)
+        d.title(f'Über {APP_NAME}')
+        d.transient(self)
+        d.resizable(False, False)
+        outer = ttk.Frame(d, padding=14)
+        outer.pack(fill='both', expand=True)
+        content = ttk.Frame(outer)
+        content.pack(fill='both', expand=True)
+        logo = ttk.Label(content)
+        logo.pack(side='left', padx=(0, 14), anchor='n')
+        try:
+            with Image.open(resource_path('JME-Spirallogo.png')) as im:
+                im = im.convert('RGBA')
+                im.thumbnail((104, 104), Image.LANCZOS)
+                d._logo = ImageTk.PhotoImage(im)
+            logo.configure(image=d._logo)
+        except Exception:
+            logo.configure(text='JME')
+        info = ttk.Frame(content)
+        info.pack(side='left', fill='both', expand=True)
+        ttk.Label(info, text=f'{APP_NAME} {APP_VERSION}', font=('Segoe UI', 15, 'bold')).pack(anchor='w', pady=(0, 7))
+        text = ('GEOS / GeoWorks File Information Viewer\n\n'
+                'Erweiterte Neuimplementierung des klassischen\n'
+                'GeoView von Rainer Bettsteller (RABE-Soft, 2000/2001).\n\n'
+                'Unterstützt GeoWorks 1.x, GEOS 2.x und FreeGEOS.\n'
+                'Icons werden direkt aus den Apps gelesen, Dokument-Icons\n'
+                'aus der erzeugenden App, sonst aus der Token-Datenbank.\n\n'
+                'Entwickelt zum 25. Geithainer PC/GEOS-Treffen\n'
+                '2026 in Syhra.\n\n'
+                'Projektleitung und Weiterentwicklung: Johannes Möller\n'
+                'KI-Unterstützung: ChatGPT (OpenAI), Grok (xAI) und Claude (Anthropic)\n\n'
+                'Möllerjaner © 2026 Johannes Möller')
+        ttk.Label(info, text=text, justify='left', wraplength=520).pack(anchor='w', fill='x')
+        ttk.Button(outer, text='Schließen', command=d.destroy).pack(anchor='e', pady=(12, 0))
+        d.update_idletasks()
+        d.geometry(f'+{self.winfo_rootx() + 40}+{self.winfo_rooty() + 40}')
+
+
+def main():
+    start = sys.argv[1] if len(sys.argv) > 1 else None
+    app = GeoViewPlus(start)
+    app.mainloop()
+
+
+if __name__ == '__main__':
+    main()
