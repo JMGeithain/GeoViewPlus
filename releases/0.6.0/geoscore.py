@@ -813,3 +813,114 @@ def match_positions(positions, dos_names):
             if file_id_hash(n, base) == fid:
                 out[orig] = (x, y)
     return out
+
+# ---------------------------------------------------------------------------
+# Application (geode) details
+# ---------------------------------------------------------------------------
+
+GEODE_ATTRS = [(0x8000, 'Prozess'), (0x4000, 'Bibliothek'), (0x2000, 'Treiber'),
+               (0x1000, 'hält Datei offen'), (0x0800, 'System'), (0x0400, 'mehrfach startbar'),
+               (0x0200, 'Anwendung')]
+
+
+@dataclass
+class GeodeInfo:
+    name: str                 # permanent name, e.g. "write"
+    ext: str                  # e.g. "app"
+    attrs: int
+    libraries: list           # [(name, protocol major, minor)]
+    resources: int
+    exports: int
+    document_tokens: list
+
+    def attr_text(self):
+        return ', '.join(n for b, n in GEODE_ATTRS if self.attrs & b) or '–'
+
+    def libs_text(self):
+        return ', '.join(f'{n} {a}.{b}' for n, a, b in self.libraries) or '–'
+
+
+def geode_info(d: bytes) -> GeodeInfo | None:
+    try:
+        if d[:4] == SIG_V2:
+            nres, nimp, nexp = struct.unpack_from('<HHH', d, 0x108)
+            attrs = struct.unpack_from('<H', d, 0x100)[0]
+            name, ext = d[0x12C:0x134], d[0x134:0x138]
+            lib_start = 0x158
+        elif d[:4] == SIG_V1:
+            h = 0xC0
+            nexp, nimp = struct.unpack_from('<HH', d, h + 0x52)
+            nres = struct.unpack_from('<H', d, h + 0x58)[0]
+            attrs = struct.unpack_from('<H', d, h + 0x22)[0]
+            name, ext = d[h + 0x34:h + 0x3C], d[h + 0x3C:h + 0x40]
+            lib_start = h + 0x60
+        else:
+            return None
+        libs = []
+        for i in range(min(nimp, 64)):
+            p = lib_start + 14 * i
+            n = d[p:p + 8].decode('latin-1').strip(' \0')
+            major, minor = struct.unpack_from('<HH', d, p + 10)
+            libs.append((n, major, minor))
+        return GeodeInfo(name.decode('latin-1').strip(' \0'), ext.decode('latin-1').strip(' \0'),
+                         attrs, libs, nres, nexp, geode_document_tokens(d))
+    except (struct.error, IndexError):
+        return None
+
+
+# ---------------------------------------------------------------------------
+# Search over an installation
+# ---------------------------------------------------------------------------
+
+@dataclass
+class SearchQuery:
+    text: str = ''            # part of GEOS long name or DOS name (case-insensitive)
+    token: str = ''           # exact token chars (case-sensitive like GEOS), '' = any
+    creator: str = ''         # exact creator token chars
+    manuf: int | None = None  # manufacturer ID of token or creator
+    kind: str = 'alle'        # 'alle', 'Programme', 'Dokumente', 'Daten'
+    version: int | None = None
+
+    def matches(self, name: str, h: GeosHeader) -> bool:
+        if self.text:
+            t = self.text.lower()
+            if t not in h.long_name.lower() and t not in name.lower():
+                return False
+        if self.token and h.token.strip('\0 ') != self.token:
+            return False
+        if self.creator and h.creator.strip('\0 ') != self.creator:
+            return False
+        if self.manuf is not None and self.manuf not in (h.token_manuf, h.creator_manuf):
+            return False
+        if self.version and h.version != self.version:
+            return False
+        if self.kind == 'Programme' and not h.type_name.startswith('Programm'):
+            return False
+        if self.kind == 'Dokumente' and not h.type_name.startswith('Dokument'):
+            return False
+        if self.kind == 'Daten' and not h.type_name.startswith('Daten'):
+            return False
+        return True
+
+
+def search(root: str, query: SearchQuery, stop=lambda: False, progress=None):
+    """Yield (path, header) of matching GEOS files below root (headers only)."""
+    n = 0
+    for dp, dirs, files in os.walk(root):
+        dirs.sort(key=str.lower)
+        for name in sorted(files, key=str.lower):
+            if stop():
+                return
+            n += 1
+            if progress and n % 200 == 0:
+                progress(n)
+            if name.upper() in ('@DIRNAME.000', '@DIRECTO.000'):
+                continue
+            p = os.path.join(dp, name)
+            try:
+                with open(p, 'rb') as f:
+                    h = parse_header(f.read(0x100))
+            except OSError:
+                continue
+            if h and query.matches(name, h):
+                yield p, h

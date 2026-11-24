@@ -9,7 +9,8 @@ Example (Windows):
 import os
 import sys
 
-from geoscore import TokenDB, find_token_db, parse_header, classify_geode_icons, moniker_rgba
+from geoscore import (TokenDB, find_token_db, parse_header, classify_geode_icons, moniker_rgba,
+                      geode_info, search, SearchQuery)
 
 failures = []
 
@@ -58,6 +59,13 @@ def test_install(root, version, app_doc):
             l = gi.for_token(doc_tok)
             check(l is not None, f'{app_name}: Dokument-Icon {doc_tok} in der App gefunden')
             check(same(l, db.lookup(doc_tok)), f'{app_name}: Dokument-Icon gleich wie in der Token-Datenbank')
+        info = geode_info(d)
+        check(info is not None and info.name.isprintable() and 0 < len(info.name) <= 8
+              and info.ext == 'app', f'{app_name}: interner Name „{info.name if info else "?"}.{info.ext if info else ""}“')
+        if doc_tok:
+            check((doc_tok, 0) in info.document_tokens, f'{app_name}: Dokumentart {doc_tok} gemeldet')
+            docs = list(search(root, SearchQuery(creator=app_tok, kind='Dokumente')))
+            print(f'  INFO  {len(docs)} Dokumente von {app_tok} gefunden')
         w, hh, rgba = moniker_rgba(gi.app.best_icon())
         check(len(rgba) == w * hh * 4, f'{app_name}: Icon {w}×{hh} zeichenbar')
 
