@@ -1,4 +1,4 @@
-# GeoViewPlus 0.5.0
+# GeoViewPlus 0.5.1
 
 Windows-Programm, das GEOS-Dateien von GeoWorks 1.x, GEOS 2.x (Ensemble, NewDeal, Breadbox)
 und FreeGEOS anzeigt: Langnamen, Kopfdaten und Icons.
