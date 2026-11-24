@@ -24,10 +24,13 @@ from tkinter import ttk, filedialog, messagebox
 from PIL import Image, ImageTk
 
 from geoscore import (TokenDB, parse_header, moniker_rgba, classify_geode_icons,
-                      find_token_db, SIG_V1)
+                      find_token_db, SIG_V1, read_dirname, read_dirinfo, match_positions,
+                      find_case, STANDARD_PATHS)
+
+ADMIN_FILES = ('@DIRNAME.000', '@DIRECTO.000')
 
 APP_NAME = 'GeoViewPlus'
-APP_VERSION = '0.5.1'
+APP_VERSION = '0.5.2'
 LIST_ICON_H = 32           # row height in the file list
 FALLBACK = {'Programm (Geode)': 'gAPP', 'Dokument (VM-Datei)': 'gDAT',
             'Daten-Datei': 'FILE', 'Verzeichnis': 'FLDR'}
@@ -222,6 +225,48 @@ class GeosContext:
                 return e, 'aus der Token-Datenbank'
         return self.standard(h.type_name), 'Standard-Icon'
 
+    def resolve_link(self, ln):
+        """Icon of a link: the target app, else the token database."""
+        app = self.apps.get((ln.token, ln.token_manuf))
+        if app and not ln.is_dir:
+            gi = self.geode_icons(app)
+            if gi and gi.app and gi.app.best_icon():
+                return gi.app, f'aus {os.path.basename(app)}'
+        if self.tokendb and ln.token.strip('\0 '):
+            e = self.tokendb.lookup(ln.token, ln.token_manuf)
+            if e and e.best_icon():
+                return e, 'aus der Token-Datenbank'
+        return self.standard('Verzeichnis' if ln.is_dir else 'Daten-Datei'), 'Standard-Icon'
+
+    def link_target(self, ln):
+        """Host path of a link target, or None (e.g. drive links inside the emulator)."""
+        if ln.std_path is None or not self.root or ln.std_path not in STANDARD_PATHS:
+            return None
+        cur = self.root
+        for part in STANDARD_PATHS[ln.std_path].split('/'):
+            if part:
+                cur = find_case(cur, part)
+                if not cur:
+                    return None
+        for part in [x for x in ln.path.split('\\') if x and x != '.']:
+            nxt = find_case(cur, part)
+            if not nxt and os.path.isdir(cur):          # match GEOS long names
+                for n in os.listdir(cur):
+                    q = os.path.join(cur, n)
+                    if os.path.isdir(q):
+                        dn = read_dirname(q)
+                        name = dn.long_name if dn else ''
+                    else:
+                        h = parse_header(read_head(q))
+                        name = h.long_name if h else ''
+                    if name == part:
+                        nxt = q
+                        break
+            if not nxt:
+                return None
+            cur = nxt
+        return cur
+
     def standard(self, type_name):
         if self.tokendb:
             e = self.tokendb.lookup(FALLBACK.get(type_name, 'FILE'))
@@ -254,6 +299,7 @@ class GeoViewPlus(tk.Tk):
         self._detail_imgs = []
         self._pending = []
         self.only_geos = tk.BooleanVar(value=True)
+        self.show_admin = tk.BooleanVar(value=False)
         self._build_menu()
         self._build_ui()
         if start:
@@ -273,6 +319,8 @@ class GeoViewPlus(tk.Tk):
         v = tk.Menu(m, tearoff=False)
         v.add_checkbutton(label='Nur GEOS-Dateien anzeigen', variable=self.only_geos,
                           command=self.refresh)
+        v.add_checkbutton(label='Verwaltungsdateien (@DIRNAME, @DIRECTO) anzeigen',
+                          variable=self.show_admin, command=self.refresh)
         v.add_command(label='Aktualisieren', accelerator='F5', command=self.refresh)
         m.add_cascade(label='Ansicht', menu=v)
         x = tk.Menu(m, tearoff=False)
@@ -355,8 +403,9 @@ class GeoViewPlus(tk.Tk):
             self.fields[r] = v
         grid.columnconfigure(1, weight=1)
 
-        ttk.Label(parent, text='Datei-Notizen:', style='Head.TLabel').pack(anchor='w', pady=(8, 0))
-        self.notes = tk.Text(parent, height=3, wrap='word', relief='flat', bg='#ececec',
+        self.notes_label = ttk.Label(parent, text='Datei-Notizen:', style='Head.TLabel')
+        self.notes_label.pack(anchor='w', pady=(8, 0))
+        self.notes = tk.Text(parent, height=6, wrap='word', relief='flat', bg='#ececec',
                              font=('Segoe UI', 9))
         self.notes.pack(fill='x')
         self.notes.configure(state='disabled')
@@ -413,6 +462,14 @@ class GeoViewPlus(tk.Tk):
             it = self.items.get(sel[0])
             if it and it['isdir']:
                 self.open_path(it['path'])
+            elif it and it.get('link'):
+                target = self.ctx.link_target(it['link'])
+                if target:
+                    self.open_path(target)
+                else:
+                    messagebox.showinfo(APP_NAME, f'Das Ziel „{it["link"].target_text()}“ liegt außerhalb '
+                                        'der Installation (z. B. ein Laufwerk im Emulator) und kann hier '
+                                        'nicht geöffnet werden.')
 
     def open_path(self, path, select=None):
         path = os.path.abspath(path.strip().strip('"'))
@@ -477,16 +534,40 @@ class GeoViewPlus(tk.Tk):
             (dirs if os.path.isdir(p) else files).append((n, p))
         n_geos = 0
         for n, p in sorted(dirs, key=lambda x: x[0].lower()):
-            label = parse_header(read_head(os.path.join(p, '@DIRNAME.000')))
-            long_name = label.long_name if label and label.long_name else n
+            dn = read_dirname(p)
+            long_name = dn.long_name if dn and dn.long_name else n
+            ftok = dn.token.strip('\0 ') if dn else ''
             kind = install_kind(p)
             typ = f'GEOS-Installation ({kind})' if kind else 'Ordner'
             iid = self.tree.insert('', 'end', text='  ' + long_name,
-                                   values=(n, typ, '', '', '', fmt_mtime(os.path.getmtime(p))))
-            self.items[iid] = dict(path=p, isdir=True, header=label, name=n, long=long_name,
-                                   install=kind)
+                                   values=(n, typ, f'{ftok}/{dn.token_manuf}' if ftok else '', '', '',
+                                           fmt_mtime(os.path.getmtime(p))))
+            self.items[iid] = dict(path=p, isdir=True, header=None, dirname=dn, name=n,
+                                   long=long_name, install=kind)
             self._pending.append(iid)
+        # Links (Verknüpfungen) stored in this folder's @DIRNAME.000
+        cur = read_dirname(self.folder)
+        for k, ln in enumerate(cur.links if cur else []):
+            tok = ln.token.strip('\0 ')
+            iid = self.tree.insert('', 'end', text='  ' + ln.long_name,
+                                   values=('→ ' + ln.target_text(),
+                                           'Verknüpfung' + (' (Ordner)' if ln.is_dir else ''),
+                                           f'{tok}/{ln.token_manuf}' if tok else '',
+                                           f'{ln.creator.strip(chr(0))}/{ln.creator_manuf}' if ln.creator.strip('\0 ') else '',
+                                           '', ''))
+            self.items[iid] = dict(path=os.path.join(self.folder, f'@link{k}'), isdir=False, header=None,
+                                   link=ln, name='@DIRNAME.000', long=ln.long_name)
+            self._pending.append(iid)
+        # GeoManager window info and icon positions (@DIRECTO.000)
+        self.dirinfo = read_dirinfo(self.folder)
+        positions = match_positions(self.dirinfo.positions, [n for n, _ in files + dirs]) \
+            if self.dirinfo and self.dirinfo.positions else {}
+        for iid, it in self.items.items():
+            if it['name'] in positions:
+                it['pos'] = positions[it['name']]
         for n, p in sorted(files, key=lambda x: x[0].lower()):
+            if n.upper() in ADMIN_FILES and not self.show_admin.get():
+                continue
             h = parse_header(read_head(p))
             if not h and self.only_geos.get():
                 continue
@@ -504,7 +585,7 @@ class GeoViewPlus(tk.Tk):
                 text = n
             iid = self.tree.insert('', 'end', text='  ' + text, values=vals)
             self.items[iid] = dict(path=p, isdir=False, header=h, name=n, long=text,
-                                   size=st.st_size, mtime=st.st_mtime)
+                                   size=st.st_size, mtime=st.st_mtime, pos=positions.get(n))
             if h:
                 self._pending.append(iid)
         self._counts = (n_geos, len(dirs))
@@ -540,8 +621,17 @@ class GeoViewPlus(tk.Tk):
             if not it:
                 continue
             if it['isdir']:
-                owner = None if it.get('install') else self.ctx.standard('Verzeichnis')
-                src = 'GEOS-Installation' if it.get('install') else 'Ordner-Symbol'
+                dn = it.get('dirname')
+                owner, src = None, 'GEOS-Installation' if it.get('install') else 'Ordner-Symbol'
+                if not it.get('install'):
+                    if dn and dn.token.strip('\0 ') and self.ctx.tokendb:
+                        e = self.ctx.tokendb.lookup(dn.token, dn.token_manuf)
+                        if e and e.best_icon():
+                            owner, src = e, f'Ordner-Icon „{dn.token}“ aus der Token-Datenbank'
+                    if not owner:
+                        owner = self.ctx.standard('Verzeichnis')
+            elif it.get('link'):
+                owner, src = self.ctx.resolve_link(it['link'])
             else:
                 owner, src = self.ctx.resolve(it['path'], it['header'])
             it['owner'], it['source'] = owner, src
@@ -612,14 +702,40 @@ class GeoViewPlus(tk.Tk):
         f = self.fields
         f['Pfad'].configure(text=os.path.dirname(it['path']))
         f['DOS-Name'].configure(text=it['name'])
+        self.notes_label.configure(text='Datei-Notizen:')
         if it['isdir']:
+            dn = it.get('dirname')
             for k in ('Datei-Typ', 'GEOS-Version', 'Token', 'Ersteller', 'Release', 'Protokoll',
                       'Größe', 'Erstellt', 'Copyright'):
                 f[k].configure(text='')
             f['Datei-Typ'].configure(text=(f'GEOS-Installation ({it["install"]})' if it.get('install') else 'Ordner')
-                                     + (' – Langname aus @DIRNAME.000' if h else ''))
+                                     + (' – Langname aus @DIRNAME.000' if dn else ''))
+            if dn:
+                f['GEOS-Version'].configure(text='GEOS 2.x / FreeGEOS')
+                tok = dn.token.strip('\0 ')
+                f['Token'].configure(text=f'„{tok}“, Hersteller-ID {dn.token_manuf} (Ordner-Icon)' if tok else '–')
             f['Letzte Änderung'].configure(text=fmt_mtime(os.path.getmtime(it['path'])))
-            self._set_notes('')
+            self.notes_label.configure(text='Ordner-Info:')
+            self._set_notes(self._folder_info(it['path'], dn))
+        elif it.get('link'):
+            ln = it['link']
+            for k in f:
+                if k not in ('Pfad', 'DOS-Name'):
+                    f[k].configure(text='')
+            f['DOS-Name'].configure(text='(gespeichert in @DIRNAME.000)')
+            f['Datei-Typ'].configure(text='Verknüpfung' + (' auf einen Ordner' if ln.is_dir else ''))
+            f['GEOS-Version'].configure(text='GEOS 2.x / FreeGEOS')
+            tok = ln.token.strip('\0 ')
+            f['Token'].configure(text=f'„{tok}“, Hersteller-ID {ln.token_manuf}' if tok else '–')
+            f['Ersteller'].configure(text=f'„{ln.creator}“, Hersteller-ID {ln.creator_manuf}'
+                                     if ln.creator.strip('\0 ') else '–')
+            f['Release'].configure(text='.'.join(map(str, ln.release)))
+            f['Protokoll'].configure(text='.'.join(map(str, ln.protocol)))
+            target = self.ctx.link_target(ln)
+            self.notes_label.configure(text='Verknüpfung:')
+            self._set_notes(f'Ziel: {ln.target_text()}\n'
+                            + (f'Auf diesem Rechner: {target}\n(Doppelklick öffnet das Ziel)' if target else
+                               'Das Ziel liegt außerhalb der Installation (z. B. Laufwerk im Emulator).'))
         elif h:
             f['Datei-Typ'].configure(text=h.type_name)
             f['GEOS-Version'].configure(text='GeoWorks 1.x' if h.version == 1 else 'GEOS 2.x / FreeGEOS')
@@ -633,7 +749,11 @@ class GeoViewPlus(tk.Tk):
             f['Erstellt'].configure(text=h.created or '–')
             f['Letzte Änderung'].configure(text=fmt_mtime(it['mtime']))
             f['Copyright'].configure(text=h.notice or '–')
-            self._set_notes(h.notes)
+            notes = h.notes
+            if it.get('pos'):
+                notes = (notes + '\n\n' if notes else '') + \
+                    f'Position im GeoManager-Fenster: x = {it["pos"][0]}, y = {it["pos"][1]}'
+            self._set_notes(notes)
         else:
             for k in f:
                 if k not in ('Pfad', 'DOS-Name'):
@@ -643,6 +763,23 @@ class GeoViewPlus(tk.Tk):
             f['Letzte Änderung'].configure(text=fmt_mtime(it['mtime']))
             self._set_notes('')
         self._fill_gallery(owner, mon)
+
+    def _folder_info(self, path, dn):
+        lines = []
+        if dn:
+            lines.append(f'Langname: {dn.long_name}')
+            if dn.links:
+                lines.append(f'Verknüpfungen darin: {len(dn.links)} ('
+                             + ', '.join(l.long_name for l in dn.links[:6])
+                             + (' …' if len(dn.links) > 6 else '') + ')')
+        di = read_dirinfo(path)
+        if di:
+            lines.append('GeoManager-Fenster (@DIRECTO.000):')
+            lines += ['  ' + x for x in di.describe().split('\n')]
+        if not lines:
+            lines.append('Keine GEOS-Ordnerdateien (@DIRNAME.000, @DIRECTO.000) – '
+                         'unter GeoWorks 1.x gibt es keine langen Ordnernamen.')
+        return '\n'.join(lines)
 
     def _set_notes(self, text):
         self.notes.configure(state='normal')

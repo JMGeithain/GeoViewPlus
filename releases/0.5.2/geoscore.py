@@ -600,3 +600,216 @@ def geode_document_tokens(d: bytes):
             if k not in toks:
                 toks.append(k)
     return toks
+
+# ---------------------------------------------------------------------------
+# Directory files of GEOS 2.x / FreeGEOS: @DIRNAME.000 and @DIRECTO.000
+# (GeoWorks 1.x has no long folder names and no such files.)
+# ---------------------------------------------------------------------------
+
+# StandardPath values (Include/file.def) -> folder below the GEOS top level
+STANDARD_PATHS = {
+    0x01: '', 0x03: 'WORLD', 0x05: 'DOCUMENT', 0x07: 'SYSTEM', 0x09: 'PRIVDATA',
+    0x0B: 'PRIVDATA/STATE', 0x0D: 'USERDATA/FONT', 0x0F: 'PRIVDATA/SPOOL',
+    0x11: 'SYSTEM/SYSAPPL', 0x13: 'USERDATA', 0x15: 'SYSTEM/MOUSE', 0x17: 'SYSTEM/PRINTER',
+    0x19: 'SYSTEM/FS', 0x1B: 'SYSTEM/VIDEO', 0x1D: 'SYSTEM/SWAP', 0x1F: 'SYSTEM/KBD',
+    0x21: 'SYSTEM/FONT', 0x23: 'SYSTEM/IMPEX', 0x25: 'SYSTEM/TASK', 0x27: 'USERDATA/HELP',
+    0x29: 'USERDATA/TEMPLATE', 0x2B: 'SYSTEM/POWER', 0x2D: 'DOSROOM', 0x2F: 'SYSTEM/HWR',
+    0x31: 'PRIVDATA/WASTE', 0x33: 'PRIVDATA/BACKUP', 0x35: 'SYSTEM/PAGER', 0x37: 'USERDATA/COMPO',
+}
+STANDARD_PATH_NAMES = {
+    0x01: 'GEOS-Hauptordner', 0x03: 'WORLD', 0x05: 'DOCUMENT', 0x07: 'SYSTEM', 0x09: 'PRIVDATA',
+    0x11: 'SYSTEM\\SYSAPPL', 0x13: 'USERDATA', 0x29: 'Vorlagen', 0x31: 'Papierkorb',
+}
+
+
+@dataclass
+class GeosLink:
+    """A link (Verknüpfung) stored in @DIRNAME.000 (DOSLinkHeader + DOSLinkData)."""
+    long_name: str
+    type_id: int
+    token: str
+    token_manuf: int
+    creator: str
+    creator_manuf: int
+    attrs: int
+    target_id: int
+    std_path: int | None        # StandardPath of the target, None for drive links
+    path: str                   # path below std_path (GEOS long names) or "A:\\."
+    release: tuple = (0, 0, 0, 0)
+    protocol: tuple = (0, 0)
+
+    @property
+    def is_dir(self):
+        return bool(self.attrs & 0x10)
+
+    def target_text(self):
+        if self.std_path is None:
+            return self.path
+        base = STANDARD_PATH_NAMES.get(self.std_path, STANDARD_PATHS.get(self.std_path, f'Standardpfad {self.std_path:#x}'))
+        return base if self.path in ('', '.') else f'{base}\\{self.path}'
+
+
+@dataclass
+class DirName:
+    long_name: str
+    token: str
+    token_manuf: int
+    links: list
+
+
+def find_case(folder, name):
+    """Case-insensitive file lookup (FreeGEOS uses lower-case names on the host)."""
+    p = os.path.join(folder, name)
+    if os.path.exists(p):
+        return p
+    try:
+        for n in os.listdir(folder):
+            if n.lower() == name.lower():
+                return os.path.join(folder, n)
+    except OSError:
+        pass
+    return None
+
+
+def parse_dirname(data: bytes) -> DirName | None:
+    h = parse_header(data)
+    if not h or h.version != 2:
+        return None
+    links = []
+    i = 0x100
+    while i + 0x71 <= len(data) and data[i:i + 4] == b'LN00':
+        ftype, = struct.unpack_from('<H', data, i + 0x28)
+        disk_size, path_size, extra = struct.unpack_from('<HHH', data, i + 0x6B)
+        body = data[i + 0x71:i + 0x71 + disk_size + path_size + extra]
+        disk, path = body[:disk_size], geos_text(body[disk_size:disk_size + path_size])
+        std = struct.unpack_from('<H', disk, 1)[0] if disk_size >= 3 and disk[0] == 0 else None
+        links.append(GeosLink(
+            long_name=geos_text(data[i + 4:i + 0x28]), type_id=ftype,
+            token=data[i + 0x38:i + 0x3C].decode('latin-1'),
+            token_manuf=struct.unpack_from('<H', data, i + 0x3C)[0],
+            creator=data[i + 0x3E:i + 0x42].decode('latin-1'),
+            creator_manuf=struct.unpack_from('<H', data, i + 0x42)[0],
+            attrs=data[i + 0x54], target_id=struct.unpack_from('<I', data, i + 0x57)[0],
+            std_path=std, path=path,
+            release=struct.unpack_from('<4H', data, i + 0x2C),
+            protocol=struct.unpack_from('<2H', data, i + 0x34)))
+        i += 0x71 + disk_size + path_size + extra
+    return DirName(h.long_name, h.token, h.token_manuf, links)
+
+
+def read_dirname(folder):
+    p = find_case(folder, '@DIRNAME.000')
+    if not p:
+        return None
+    try:
+        with open(p, 'rb') as f:
+            return parse_dirname(f.read())
+    except OSError:
+        return None
+
+
+def _ratio(v):
+    """SpecWinSizeSpec: ratio flag, sign, 4-bit mantissa, 10-bit fraction."""
+    if not v & 0x8000:
+        return f'{v} Punkte'
+    val = ((v >> 10) & 15) + (v & 0x3FF) / 1024
+    return f'{val * 100:.0f} %'
+
+
+@dataclass
+class DirInfo:
+    """GeoManager folder window information (@DIRECTO.000)."""
+    protocol: int
+    win_size: tuple
+    win_pos: tuple
+    view: str
+    sort: str
+    types: str
+    attrs: str
+    positions: list          # [(x, y, flags, file_id)]
+
+    def describe(self):
+        lines = [f'Fenstergröße: {_ratio(self.win_size[0])} × {_ratio(self.win_size[1])} des Bildschirms',
+                 f'Fensterposition: {_ratio(self.win_pos[0])} von links, {_ratio(self.win_pos[1])} von oben',
+                 f'Ansicht: {self.view}', f'Sortierung: {self.sort}',
+                 f'Angezeigt: {self.types}; {self.attrs}']
+        lines.append(f'Frei verschobene Symbole: {len(self.positions)}' if self.positions
+                     else 'Frei verschobene Symbole: keine')
+        return '\n'.join(lines)
+
+
+def _flags(value, names):
+    return ', '.join(n for bit, n in names if value & bit) or '–'
+
+
+def parse_dirinfo(data: bytes) -> DirInfo | None:
+    vm = VMFile(data)
+    m = vm.block(vm.map_block)
+    proto, arr = struct.unpack_from('<BH', m, 0x10)
+    ws = struct.unpack_from('<HH', m, 0x13)
+    wp = struct.unpack_from('<HH', m, 0x17)
+    mode, sort, attrs, types = m[0x1B], m[0x1C], m[0x1D], m[0x1E]
+    ptr = struct.unpack_from('<H', m, arr)[0]
+    chunk = m[ptr:ptr + struct.unpack_from('<H', m, ptr - 2)[0] - 2]
+    count, esize = struct.unpack_from('<HH', chunk, 0)
+    hsize = struct.unpack_from('<H', chunk, 6)[0] if len(chunk) >= 8 else 8
+    pos = [struct.unpack_from('<hhBI', chunk, hsize + k * esize) for k in range(count)
+           if hsize + (k + 1) * esize <= len(chunk)]
+    return DirInfo(
+        protocol=proto, win_size=ws, win_pos=wp,
+        view=_flags(mode, [(8, 'nur Namen'), (4, 'Namen und Details'), (2, 'große Symbole'), (1, 'kleine Symbole')]),
+        sort=_flags(sort, [(0x20, 'Erstelldatum'), (0x10, 'Name'), (8, 'Erweiterung'), (4, 'Datum'),
+                           (2, 'Größe'), (1, 'DOS-Reihenfolge')]),
+        types=_flags(types, [(8, 'alle Dateien'), (4, 'nur Ordner'), (2, 'nur Programme'), (1, 'nur Daten')]),
+        attrs=_flags(attrs, [(0x40, 'alle Attribute'), (0x20, 'schreibgeschützte'), (0x10, 'Archiv'),
+                             (8, 'versteckte'), (4, 'System'), (2, 'kompakt'), (1, 'Ordner-Info-Zeile')]),
+        positions=pos)
+
+
+def read_dirinfo(folder):
+    p = find_case(folder, '@DIRECTO.000')
+    if not p:
+        return None
+    try:
+        with open(p, 'rb') as f:
+            return parse_dirinfo(f.read())
+    except Exception:
+        return None
+
+
+def file_id_hash(text: str, start: int = 0) -> int:
+    """FileID of the FreeGEOS DOS driver: id = id*33 + char, backslashes skipped."""
+    v = start
+    for c in text.encode('cp437', 'replace'):
+        if c != 0x5C:
+            v = (v * 33 + c) & 0xFFFFFFFF
+    return v
+
+
+def match_positions(positions, dos_names):
+    """Assign @DIRECTO.000 icon positions to DOS file names.
+
+    The FileID of a file is hash(folder path inside GEOS) continued with its
+    name.  The folder path is unknown on the host, so the folder's own hash
+    is solved from each (entry, name) pair; the value shared by most pairs
+    is taken.  Returns {dos_name: (x, y)}.
+    """
+    from collections import Counter
+    if not positions:
+        return {}
+    names = [n.upper() for n in dos_names]
+    cand = Counter()
+    for _, _, _, fid in positions:
+        for n in names:
+            h = file_id_hash(n)
+            inv = pow(pow(33, len(n.encode('cp437', 'replace')), 1 << 32), -1, 1 << 32)
+            cand[((fid - h) * inv) & 0xFFFFFFFF] += 1
+    base, hits = cand.most_common(1)[0]
+    if hits < min(2, len(positions)):
+        return {}
+    out = {}
+    for x, y, _, fid in positions:
+        for n, orig in zip(names, dos_names):
+            if file_id_hash(n, base) == fid:
+                out[orig] = (x, y)
+    return out

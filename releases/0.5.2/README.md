@@ -1,4 +1,4 @@
-# GeoViewPlus 0.5.1
+# GeoViewPlus 0.5.2
 
 Windows-Programm, das GEOS-Dateien von GeoWorks 1.x, GEOS 2.x (Ensemble, NewDeal, Breadbox)
 und FreeGEOS anzeigt: Langnamen, Kopfdaten und Icons.
@@ -21,6 +21,22 @@ Vorbild: GeoView von Rainer Bettsteller (RABE-Soft, 2000).
    Die App meldet ihre Dokument-Tokens in den Daten des Dokument-Controllers.
 3. Sonst aus der Token-Datenbank (`SYSTEM\TOKEN.DB` bzw. `PRIVDATA\TOKEN_DA.000`).
 4. Zuletzt ein Standard-Icon (gAPP, gDAT, FILE, FLDR).
+
+## Ordner (nur GEOS 2.x / FreeGEOS)
+
+GeoWorks 1.x kennt keine langen Ordnernamen. Ab GEOS 2.x liegen in Ordnern zwei Verwaltungsdateien:
+
+* `@DIRNAME.000` – GEOS-Dateikopf mit Langname und Token des Ordners (eigenes Ordner-Icon,
+  z. B. `nMYC` für „Computer“). Danach folgen die **Verknüpfungen** des Ordners: je ein Satz
+  mit Signatur `LN00`, Langname, Typ, Token, Ersteller, Attributen und dem Ziel
+  (Standardpfad wie WORLD/DOCUMENT/SYSAPPL plus Pfad aus GEOS-Langnamen, oder ein Laufwerk wie `A:\.`).
+  GeoViewPlus zeigt die Verknüpfungen als eigene Einträge; ein Doppelklick öffnet das Ziel.
+* `@DIRECTO.000` – VM-Datei von GeoManager (DirInfo, Protokoll 4): Fenstergröße und -position
+  in Prozent des Bildschirms, Ansicht, Sortierung, angezeigte Dateitypen und die Positionen frei
+  verschobener Symbole. Die Positionen hängen an einer FileID (Hash `id = id*33 + Zeichen` über
+  den DOS-Pfad im Emulator); GeoViewPlus ordnet sie den Dateien zu, indem es den unbekannten
+  Ordnerpfad-Anteil aus den Einträgen zurückrechnet. *An echten Dateien mit verschobenen Symbolen
+  noch nicht geprüft.*
 
 ## Formate (geprüft an GeoWorks 1.28 und FreeGEOS 2.81)
 
