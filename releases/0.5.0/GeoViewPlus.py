@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import os
 import sys
+import threading
 import time
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
@@ -23,10 +24,10 @@ from tkinter import ttk, filedialog, messagebox
 from PIL import Image, ImageTk
 
 from geoscore import (TokenDB, parse_header, moniker_rgba, classify_geode_icons,
-                      find_token_db, geos_text)
+                      find_token_db, SIG_V1)
 
 APP_NAME = 'GeoViewPlus'
-APP_VERSION = '0.5.0'
+APP_VERSION = '0.5.1'
 LIST_ICON_H = 32           # row height in the file list
 FALLBACK = {'Programm (Geode)': 'gAPP', 'Dokument (VM-Datei)': 'gDAT',
             'Daten-Datei': 'FILE', 'Verzeichnis': 'FLDR'}
@@ -53,6 +54,32 @@ def fit_row(img, height=LIST_ICON_H, width=52):
         img.thumbnail((width, height), Image.NEAREST)
     cell.paste(img, ((width - img.width) // 2, (height - img.height) // 2), img)
     return cell
+
+
+def builtin_icon(kind):
+    """Small drawn icons for when no token database is available."""
+    from PIL import ImageDraw
+    img = Image.new('RGBA', (48, 30), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    if kind == 'folder':
+        d.rectangle((6, 6, 20, 10), fill=(255, 255, 85), outline=(0, 0, 0))
+        d.rectangle((6, 9, 41, 27), fill=(255, 255, 85), outline=(0, 0, 0))
+    elif kind == 'install':
+        d.rectangle((6, 6, 20, 10), fill=(85, 255, 255), outline=(0, 0, 0))
+        d.rectangle((6, 9, 41, 27), fill=(85, 255, 255), outline=(0, 0, 0))
+        d.text((15, 12), 'GEOS', fill=(0, 0, 170))
+    else:
+        d.polygon([(14, 2), (30, 2), (36, 8), (36, 28), (14, 28)], fill=(255, 255, 255), outline=(0, 0, 0))
+        d.line([(30, 2), (30, 8), (36, 8)], fill=(0, 0, 0))
+    return img
+
+
+def install_kind(folder):
+    """'GeoWorks 1.x' / 'GEOS 2.x / FreeGEOS' if folder is a GEOS installation."""
+    db = find_token_db(folder)
+    if not db:
+        return None
+    return 'GeoWorks 1.x' if read_head(db, 4) == SIG_V1 else 'GEOS 2.x / FreeGEOS'
 
 
 def read_head(path, n=0x100):
@@ -84,6 +111,9 @@ class GeosContext:
         self.tokendb_path = None
         self.apps = {}              # (token, manuf) -> path of application
         self._icons = {}            # app path -> GeodeIcons
+        self._key = None
+        self.generation = 0
+        self.index_done = False
 
     @staticmethod
     def find_root(folder):
@@ -98,27 +128,61 @@ class GeosContext:
                 return None
             cur = parent
 
-    def open_for(self, folder, progress=None):
-        root = self.find_root(folder) or os.path.abspath(folder)
-        if root == self.root:
-            return
+    def open_for(self, folder):
+        """Switch to the installation of folder. Returns True if it changed.
+
+        Only the token database is loaded here; the application index is
+        built afterwards in a background thread (start_index).
+        """
+        root = self.find_root(folder)
+        key = root or ('folder', os.path.abspath(folder))
+        if key == self._key:
+            return False
+        self._key = key
         self.root = root
-        self.apps.clear()
-        self._icons.clear()
-        db = find_token_db(root)
-        self.load_tokendb(db)
+        self.generation += 1
+        self.apps = {}
+        self._icons = {}
+        self.index_done = False
+        self.load_tokendb(find_token_db(root) if root else None)
+        return True
+
+    def index_dirs(self, folder):
+        """Folders searched for applications.
+
+        In an installation: only its WORLD folder (apps live there).
+        Outside an installation: only the opened folder itself, not recursive,
+        so a parent folder with many installations is never scanned.
+        """
+        if self.root:
+            for n in os.listdir(self.root):
+                if n.upper() == 'WORLD' and os.path.isdir(os.path.join(self.root, n)):
+                    return [(os.path.join(self.root, n), True)]
+            return [(self.root, False)]
+        return [(os.path.abspath(folder), False)]
+
+    def build_index(self, folder, generation, progress=None):
+        """Runs in a background thread. Must not touch Tk."""
+        apps = {}
         n = 0
-        for dp, dirs, files in os.walk(root):
-            dirs[:] = [d for d in dirs if d.upper() not in ('DOSROOM', 'SPOOL', 'CACHE', 'WASTE')]
-            for name in files:
-                if name.lower().endswith('.geo'):
-                    p = os.path.join(dp, name)
-                    h = parse_header(read_head(p))
-                    if h and h.type_name.startswith('Programm'):
-                        self.apps.setdefault((h.token, h.token_manuf), p)
-                n += 1
-                if progress and n % 200 == 0:
-                    progress(n)
+        for top, recursive in self.index_dirs(folder):
+            walker = os.walk(top) if recursive else [(top, [], os.listdir(top))]
+            for dp, dirs, files in walker:
+                for name in files:
+                    if generation != self.generation:
+                        return
+                    if name.lower().endswith('.geo'):
+                        p = os.path.join(dp, name)
+                        if os.path.isfile(p):
+                            h = parse_header(read_head(p))
+                            if h and h.type_name.startswith('Programm'):
+                                apps.setdefault((h.token, h.token_manuf), p)
+                        n += 1
+                        if progress and n % 50 == 0:
+                            progress(n)
+        if generation == self.generation:
+            self.apps = apps
+            self.index_done = True
 
     def load_tokendb(self, path):
         self.tokendb, self.tokendb_path = None, None
@@ -360,15 +424,39 @@ class GeoViewPlus(tk.Tk):
             return
         self.folder = path
         self.path_var.set(path)
-        self.status.set('Lese Installation …')
-        self.config(cursor='watch')
-        self.update_idletasks()
-        try:
-            self.ctx.open_for(path, progress=lambda n: (self.status.set(f'Lese Installation … {n} Dateien'),
-                                                         self.update_idletasks()))
-        finally:
-            self.config(cursor='')
+        if self.ctx.open_for(path):
+            self._start_index(path)
         self.refresh(select)
+
+    def _start_index(self, folder):
+        """Build the application index without blocking the window."""
+        gen = self.ctx.generation
+        self._index_count = 0
+
+        def progress(n):
+            self._index_count = n
+
+        t = threading.Thread(target=self.ctx.build_index, args=(folder, gen, progress), daemon=True)
+        t.start()
+        self._watch_index(t, gen)
+
+    def _watch_index(self, thread, gen):
+        if gen != self.ctx.generation:
+            return
+        if thread.is_alive():
+            self.status_extra = f'Suche Apps … {self._index_count} gefunden'
+            self._update_status()
+            self.after(200, lambda: self._watch_index(thread, gen))
+            return
+        self.status_extra = ''
+        # Documents may now get their icon from the creating app
+        for iid, it in self.items.items():
+            if not it['isdir'] and it.get('header') and it.get('source') != 'aus der App selbst':
+                it.pop('source', None)
+                if iid not in self._pending:
+                    self._pending.append(iid)
+        self._update_status()
+        self.after(1, self._load_icons)
 
     # ---------------- listing ----------------
     def refresh(self, select=None):
@@ -391,9 +479,12 @@ class GeoViewPlus(tk.Tk):
         for n, p in sorted(dirs, key=lambda x: x[0].lower()):
             label = parse_header(read_head(os.path.join(p, '@DIRNAME.000')))
             long_name = label.long_name if label and label.long_name else n
+            kind = install_kind(p)
+            typ = f'GEOS-Installation ({kind})' if kind else 'Ordner'
             iid = self.tree.insert('', 'end', text='  ' + long_name,
-                                   values=(n, 'Ordner', '', '', '', fmt_mtime(os.path.getmtime(p))))
-            self.items[iid] = dict(path=p, isdir=True, header=label, name=n, long=long_name)
+                                   values=(n, typ, '', '', '', fmt_mtime(os.path.getmtime(p))))
+            self.items[iid] = dict(path=p, isdir=True, header=label, name=n, long=long_name,
+                                   install=kind)
             self._pending.append(iid)
         for n, p in sorted(files, key=lambda x: x[0].lower()):
             h = parse_header(read_head(p))
@@ -416,9 +507,8 @@ class GeoViewPlus(tk.Tk):
                                    size=st.st_size, mtime=st.st_mtime)
             if h:
                 self._pending.append(iid)
-        db = os.path.relpath(self.ctx.tokendb_path, self.ctx.root) if self.ctx.tokendb_path else 'keine'
-        self.status.set(f'{n_geos} GEOS-Dateien · {len(dirs)} Ordner · Installation: {self.ctx.root} · '
-                        f'Token-Datenbank: {db} · {len(self.ctx.apps)} Apps gefunden')
+        self._counts = (n_geos, len(dirs))
+        self._update_status()
         target = None
         for iid, it in self.items.items():
             if select and os.path.normcase(it['path']) == os.path.normcase(select):
@@ -431,6 +521,17 @@ class GeoViewPlus(tk.Tk):
             self.tree.see(t)
         self.after(1, self._load_icons)
 
+    def _update_status(self):
+        n_geos, n_dirs = getattr(self, '_counts', (0, 0))
+        if self.ctx.root:
+            db = os.path.relpath(self.ctx.tokendb_path, self.ctx.root) if self.ctx.tokendb_path else 'keine'
+            inst = f'Installation: {self.ctx.root} · Token-Datenbank: {db}'
+        else:
+            inst = 'keine GEOS-Installation erkannt (Ordner darüber oder daneben)'
+        extra = getattr(self, 'status_extra', '')
+        apps = extra or f'{len(self.ctx.apps)} Apps bekannt'
+        self.status.set(f'{n_geos} GEOS-Dateien · {n_dirs} Ordner · {inst} · {apps}')
+
     def _load_icons(self):
         """Resolve icons in small batches so the window stays responsive."""
         batch, self._pending = self._pending[:15], self._pending[15:]
@@ -439,15 +540,22 @@ class GeoViewPlus(tk.Tk):
             if not it:
                 continue
             if it['isdir']:
-                owner, src = self.ctx.standard('Verzeichnis'), 'Ordner-Symbol'
+                owner = None if it.get('install') else self.ctx.standard('Verzeichnis')
+                src = 'GEOS-Installation' if it.get('install') else 'Ordner-Symbol'
             else:
                 owner, src = self.ctx.resolve(it['path'], it['header'])
             it['owner'], it['source'] = owner, src
             mon = owner.best_icon(prefer=(1, 0, 2, 3)) if owner else None
             if mon:
-                photo = ImageTk.PhotoImage(fit_row(moniker_image(mon)))
-                self._img_refs[iid] = photo
-                self.tree.item(iid, image=photo)
+                img = moniker_image(mon)
+            else:
+                img = builtin_icon('install' if it.get('install') else 'folder' if it['isdir'] else 'file')
+                if src == 'Standard-Icon':
+                    it['source'] = 'eingebautes Symbol (keine Token-Datenbank)'
+            it['img'] = img
+            photo = ImageTk.PhotoImage(fit_row(img))
+            self._img_refs[iid] = photo
+            self.tree.item(iid, image=photo)
             if iid in self.tree.selection():
                 self.show_detail()
         if self._pending:
@@ -490,6 +598,11 @@ class GeoViewPlus(tk.Tk):
             ph = ImageTk.PhotoImage(img)
             self._detail_imgs.append(ph)
             self.big_icon.configure(image=ph, width=max(140, img.width + 8), height=max(88, img.height + 8))
+        elif it.get('img') is not None:
+            img = it['img'].resize((it['img'].width * 2, it['img'].height * 2), Image.NEAREST)
+            ph = ImageTk.PhotoImage(img)
+            self._detail_imgs.append(ph)
+            self.big_icon.configure(image=ph, width=140, height=88)
         else:
             self.big_icon.configure(image='')
         self.d_name.configure(text=it['long'])
@@ -503,7 +616,8 @@ class GeoViewPlus(tk.Tk):
             for k in ('Datei-Typ', 'GEOS-Version', 'Token', 'Ersteller', 'Release', 'Protokoll',
                       'Größe', 'Erstellt', 'Copyright'):
                 f[k].configure(text='')
-            f['Datei-Typ'].configure(text='Ordner' + (' (Langname aus @DIRNAME.000)' if h else ''))
+            f['Datei-Typ'].configure(text=(f'GEOS-Installation ({it["install"]})' if it.get('install') else 'Ordner')
+                                     + (' – Langname aus @DIRNAME.000' if h else ''))
             f['Letzte Änderung'].configure(text=fmt_mtime(os.path.getmtime(it['path'])))
             self._set_notes('')
         elif h:
