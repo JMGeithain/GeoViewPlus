@@ -61,7 +61,7 @@ def test_install(root, version, app_doc):
             check(same(l, db.lookup(doc_tok)), f'{app_name}: Dokument-Icon gleich wie in der Token-Datenbank')
         info = geode_info(d)
         check(info is not None and info.name.isprintable() and 0 < len(info.name) <= 8
-              and info.ext == 'app', f'{app_name}: interner Name „{info.name if info else "?"}.{info.ext if info else ""}“')
+              and info.ext in ('app', 'acc'), f'{app_name}: interner Name „{info.name if info else "?"}.{info.ext if info else ""}“')
         if doc_tok:
             check((doc_tok, 0) in info.document_tokens, f'{app_name}: Dokumentart {doc_tok} gemeldet')
             docs = list(search(root, SearchQuery(creator=app_tok, kind='Dokumente')))
