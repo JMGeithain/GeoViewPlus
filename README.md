@@ -18,6 +18,8 @@ Neuanfang mit vollständigem Quellcode in [releases/0.7.0](releases/0.7.0/README
 * **Windows:** Ziehen und Ablegen, Eintrag „Mit GeoViewPlus öffnen“ im Explorer-Kontextmenü.
 * Regressionstest `test_geoscore.py` gegen eine echte Installation; Originaldateien werden nicht ins Repository übernommen.
 
+Frühere Untersuchungsberichte aus nicht übernommenen Zweigen: [docs/archiv](docs/archiv/README.md).
+
 ## Arbeitsstand 0.4.4.1 (10.11.2026)
 
 **Dokumentierter Anwendungstand: 0.4.4.1 (10.11.2026)**
