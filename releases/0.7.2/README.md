@@ -1,4 +1,4 @@
-# GeoViewPlus 0.7.1
+# GeoViewPlus 0.7.2
 
 Windows-Programm, das GEOS-Dateien von GeoWorks 1.x, GEOS 2.x (Ensemble, NewDeal, Breadbox)
 und FreeGEOS anzeigt: Langnamen, Kopfdaten und Icons.
@@ -19,7 +19,9 @@ Vorbild: GeoView von Rainer Bettsteller (RABE-Soft, 2000).
 
 1. **Apps:** aus der App selbst (Icon-Liste im Bereich des Application-Objekts).
 2. **Dokumente:** aus der App, die das Dokument erzeugt hat (Ersteller-Token im Dokumentkopf).
-   Die App meldet ihre Dokument-Tokens in den Daten des Dokument-Controllers.
+   Die App meldet ihre Dokument-Tokens in den Daten des Dokument-Controllers
+   (1.x: `18 E7` + Dokument-Token + App-Token; 2.x: `04 C0 00 02 00 00 00 00 00` + Dokument-Token,
+   bei manchen Apps zusätzlich `07 6C 0A 00` + Dokument-Token).
 3. Sonst aus der Token-Datenbank (`SYSTEM\TOKEN.DB` bzw. `PRIVDATA\TOKEN_DA.000`).
 4. Zuletzt ein Standard-Icon (gAPP, gDAT, FILE, FLDR).
 
@@ -76,7 +78,7 @@ GeoWorks 1.x kennt keine langen Ordnernamen. Ab GEOS 2.x liegen in Ordnern zwei 
   Ordnerpfad-Anteil aus den Einträgen zurückrechnet. *An echten Dateien mit verschobenen Symbolen
   noch nicht geprüft.*
 
-## Formate (geprüft an GeoWorks 1.28 und FreeGEOS 2.81)
+## Formate (geprüft an GeoWorks 1.28, GeoWorks 2.01 und FreeGEOS 2.81)
 
 * Dateikopf 1.x: Signatur `C7 45 CF 53`, Kopf 0xC8 Bytes; Typ +04h, Release +08h, Protokoll +10h,
   Token +14h, Ersteller +1Ah, Langname +20h, Notizen +44h, Copyright +A8h.
@@ -96,6 +98,6 @@ GeoWorks 1.x kennt keine langen Ordnernamen. Ab GEOS 2.x liegen in Ordnern zwei 
 
 ## Test
 
-    python test_geoscore.py "%APPDATA%\freeGEOS\GEOWORKS" "%APPDATA%\freeGEOS\FreeGEOS.281"
+    python test_geoscore.py "%APPDATA%\freeGEOS\GEOWORKS" "%APPDATA%\freeGEOS\FreeGEOS.281" "%APPDATA%\freeGEOS\GW201003.DEU"
 
 Möllerjaner © 2026 Johannes Möller
