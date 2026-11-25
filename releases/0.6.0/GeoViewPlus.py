@@ -17,6 +17,7 @@ from __future__ import annotations
 import os
 import sys
 import threading
+from collections import deque
 import time
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
@@ -25,12 +26,12 @@ from PIL import Image, ImageTk
 
 from geoscore import (TokenDB, parse_header, moniker_rgba, classify_geode_icons,
                       find_token_db, SIG_V1, read_dirname, read_dirinfo, match_positions,
-                      find_case, STANDARD_PATHS)
+                      find_case, STANDARD_PATHS, geode_info, SearchQuery, search)
 
 ADMIN_FILES = ('@DIRNAME.000', '@DIRECTO.000')
 
 APP_NAME = 'GeoViewPlus'
-APP_VERSION = '0.5.2'
+APP_VERSION = '0.6.0'
 LIST_ICON_H = 32           # row height in the file list
 FALLBACK = {'Programm (Geode)': 'gAPP', 'Dokument (VM-Datei)': 'gDAT',
             'Daten-Datei': 'FILE', 'Verzeichnis': 'FLDR'}
@@ -324,6 +325,7 @@ class GeoViewPlus(tk.Tk):
         v.add_command(label='Aktualisieren', accelerator='F5', command=self.refresh)
         m.add_cascade(label='Ansicht', menu=v)
         x = tk.Menu(m, tearoff=False)
+        x.add_command(label='Suchen …', accelerator='Strg+F', command=self.open_search)
         x.add_command(label='Token-Datenbank durchsehen …', command=self.show_tokendb)
         m.add_cascade(label='Extras', menu=x)
         h = tk.Menu(m, tearoff=False)
@@ -332,6 +334,7 @@ class GeoViewPlus(tk.Tk):
         self.config(menu=m)
         self.bind('<Control-o>', lambda e: self.ask_folder())
         self.bind('<F5>', lambda e: self.refresh())
+        self.bind('<Control-f>', lambda e: self.open_search())
 
     def _build_ui(self):
         style = ttk.Style(self)
@@ -343,6 +346,7 @@ class GeoViewPlus(tk.Tk):
         top.pack(fill='x')
         ttk.Button(top, text='Ordner öffnen …', command=self.ask_folder).pack(side='left')
         ttk.Button(top, text='▲ übergeordnet', command=self.go_up).pack(side='left', padx=(6, 0))
+        ttk.Button(top, text='Suchen …', command=self.open_search).pack(side='right', padx=(6, 0))
         self.path_var = tk.StringVar()
         e = ttk.Entry(top, textvariable=self.path_var)
         e.pack(side='left', fill='x', expand=True, padx=8)
@@ -390,14 +394,20 @@ class GeoViewPlus(tk.Tk):
         self.d_name.pack(anchor='w')
         self.d_src = ttk.Label(hd, text='', foreground='#2c6e2c', wraplength=300)
         self.d_src.pack(anchor='w', pady=(4, 0))
+        self.d_buttons = ttk.Frame(hd)
+        self.d_buttons.pack(anchor='w', pady=(6, 0))
 
         grid = ttk.Frame(parent)
         grid.pack(fill='x')
         self.fields = {}
+        self.field_labels = {}
         rows = ['Pfad', 'DOS-Name', 'Datei-Typ', 'GEOS-Version', 'Token', 'Ersteller',
-                'Release', 'Protokoll', 'Größe', 'Erstellt', 'Letzte Änderung', 'Copyright']
+                'Release', 'Protokoll', 'Größe', 'Erstellt', 'Letzte Änderung', 'Copyright',
+                'Interner Name', 'Eigenschaften', 'Bibliotheken', 'Dokumentarten', 'Erzeugt von']
         for i, r in enumerate(rows):
-            ttk.Label(grid, text=r + ':', style='Head.TLabel').grid(row=i, column=0, sticky='ne', padx=(0, 8))
+            lab = ttk.Label(grid, text=r + ':', style='Head.TLabel')
+            lab.grid(row=i, column=0, sticky='ne', padx=(0, 8))
+            self.field_labels[r] = lab
             v = ttk.Label(grid, text='', wraplength=330, justify='left')
             v.grid(row=i, column=1, sticky='nw')
             self.fields[r] = v
@@ -405,7 +415,7 @@ class GeoViewPlus(tk.Tk):
 
         self.notes_label = ttk.Label(parent, text='Datei-Notizen:', style='Head.TLabel')
         self.notes_label.pack(anchor='w', pady=(8, 0))
-        self.notes = tk.Text(parent, height=6, wrap='word', relief='flat', bg='#ececec',
+        self.notes = tk.Text(parent, height=4, wrap='word', relief='flat', bg='#ececec',
                              font=('Segoe UI', 9))
         self.notes.pack(fill='x')
         self.notes.configure(state='disabled')
@@ -700,6 +710,10 @@ class GeoViewPlus(tk.Tk):
                              foreground='#a00' if 'Standard' in it.get('source', '') else
                              '#555' if 'Datenbank' in it.get('source', '') else '#2c6e2c')
         f = self.fields
+        for k in ('Interner Name', 'Eigenschaften', 'Bibliotheken', 'Dokumentarten', 'Erzeugt von'):
+            f[k].configure(text='')
+        for w in self.d_buttons.winfo_children():
+            w.destroy()
         f['Pfad'].configure(text=os.path.dirname(it['path']))
         f['DOS-Name'].configure(text=it['name'])
         self.notes_label.configure(text='Datei-Notizen:')
@@ -749,6 +763,7 @@ class GeoViewPlus(tk.Tk):
             f['Erstellt'].configure(text=h.created or '–')
             f['Letzte Änderung'].configure(text=fmt_mtime(it['mtime']))
             f['Copyright'].configure(text=h.notice or '–')
+            self._program_details(it, h)
             notes = h.notes
             if it.get('pos'):
                 notes = (notes + '\n\n' if notes else '') + \
@@ -763,6 +778,56 @@ class GeoViewPlus(tk.Tk):
             f['Letzte Änderung'].configure(text=fmt_mtime(it['mtime']))
             self._set_notes('')
         self._fill_gallery(owner, mon)
+        # show only rows that have a value
+        for k, v in f.items():
+            if v.cget('text'):
+                self.field_labels[k].grid()
+                v.grid()
+            else:
+                self.field_labels[k].grid_remove()
+                v.grid_remove()
+
+    def _button(self, text, cmd):
+        ttk.Button(self.d_buttons, text=text, command=cmd).pack(side='left', padx=(0, 6))
+
+    def _program_details(self, it, h):
+        """Extra rows for applications and documents, plus jump/search buttons."""
+        f = self.fields
+        tok, creator = h.token.strip('\0 '), h.creator.strip('\0 ')
+        if h.type_name.startswith('Programm'):
+            try:
+                with open(it['path'], 'rb') as fh:
+                    gi = geode_info(fh.read())
+            except OSError:
+                gi = None
+            if gi:
+                f['Interner Name'].configure(text=f'{gi.name}.{gi.ext}' if gi.ext else gi.name)
+                f['Eigenschaften'].configure(text=f'{gi.attr_text()} · {gi.resources} Ressourcen, '
+                                                  f'{gi.exports} Exporte')
+                f['Bibliotheken'].configure(text=gi.libs_text())
+                f['Dokumentarten'].configure(text=', '.join(f'„{t}“/{m}' for t, m in gi.document_tokens)
+                                             or 'keine')
+            if tok:
+                self._button('Dokumente dieser App suchen …',
+                             lambda: self.open_search(SearchQuery(creator=tok, kind='Dokumente')))
+        elif creator:
+            app = self.ctx.apps.get((h.creator, h.creator_manuf)) or next(
+                (p for (t, m), p in self.ctx.apps.items() if t == h.creator), None)
+            if app:
+                ah = parse_header(read_head(app))
+                f['Erzeugt von'].configure(text=f'{ah.long_name if ah else ""} ({os.path.basename(app)})')
+                self._button('→ Zur App', lambda: self.open_path(app))
+            else:
+                f['Erzeugt von'].configure(text=f'App mit Token „{creator}“ – in dieser Installation nicht gefunden')
+            self._button('Ähnliche Dokumente suchen …',
+                         lambda: self.open_search(SearchQuery(token=tok, creator=creator)))
+
+    def open_search(self, query=None):
+        root = self.ctx.root or self.folder
+        if not root:
+            messagebox.showinfo(APP_NAME, 'Bitte zuerst einen Ordner öffnen.')
+            return
+        SearchWindow(self, root, query or SearchQuery())
 
     def _folder_info(self, path, dn):
         lines = []
@@ -930,6 +995,136 @@ class GeoViewPlus(tk.Tk):
         ttk.Button(outer, text='Schließen', command=d.destroy).pack(anchor='e', pady=(12, 0))
         d.update_idletasks()
         d.geometry(f'+{self.winfo_rootx() + 40}+{self.winfo_rooty() + 40}')
+
+
+class SearchWindow(tk.Toplevel):
+    """Search GEOS files of the whole installation by name, token, creator, ID."""
+
+    KINDS = ('alle', 'Programme', 'Dokumente', 'Daten')
+
+    def __init__(self, app, root, query):
+        super().__init__(app)
+        self.app = app
+        self.root_dir = root
+        self.title(f'Suchen – {root}')
+        self.geometry('980x600')
+        self._imgs = {}
+        self._gen = 0
+        self.results = {}
+        frm = ttk.Frame(self, padding=8)
+        frm.pack(fill='x')
+        self.v_text = tk.StringVar(value=query.text)
+        self.v_token = tk.StringVar(value=query.token)
+        self.v_creator = tk.StringVar(value=query.creator)
+        self.v_manuf = tk.StringVar(value='' if query.manuf is None else str(query.manuf))
+        self.v_kind = tk.StringVar(value=query.kind)
+        self.v_scope = tk.StringVar(value='inst')
+        row = 0
+        for label, var, width in (('Name enthält:', self.v_text, 24), ('Token:', self.v_token, 6),
+                                  ('Ersteller:', self.v_creator, 6), ('Hersteller-ID:', self.v_manuf, 7)):
+            ttk.Label(frm, text=label).grid(row=0, column=row, sticky='e', padx=(8 if row else 0, 4))
+            e = ttk.Entry(frm, textvariable=var, width=width)
+            e.grid(row=0, column=row + 1, sticky='w')
+            e.bind('<Return>', lambda ev: self.start())
+            if row == 0:
+                e.focus_set()
+            row += 2
+        ttk.Label(frm, text='Art:').grid(row=1, column=0, sticky='e', padx=(0, 4), pady=(6, 0))
+        ttk.Combobox(frm, textvariable=self.v_kind, values=self.KINDS, state='readonly',
+                     width=12).grid(row=1, column=1, sticky='w', pady=(6, 0))
+        sc = ttk.Frame(frm)
+        sc.grid(row=1, column=2, columnspan=5, sticky='w', pady=(6, 0), padx=(8, 0))
+        ttk.Radiobutton(sc, text=f'ganze Installation ({root})', variable=self.v_scope,
+                        value='inst').pack(side='left')
+        ttk.Radiobutton(sc, text='aktueller Ordner mit Unterordnern', variable=self.v_scope,
+                        value='folder').pack(side='left', padx=(10, 0))
+        self.btn = ttk.Button(frm, text='Suchen', command=self.start)
+        self.btn.grid(row=0, column=8, rowspan=2, padx=(12, 0), sticky='ns')
+        tv = ttk.Treeview(self, style='Files.Treeview',
+                          columns=('dos', 'folder', 'type', 'token', 'creator'))
+        for k, t, w in (('#0', 'GEOS-Name', 260), ('dos', 'DOS-Name', 110), ('folder', 'Ordner', 230),
+                        ('type', 'Typ', 150), ('token', 'Token', 80), ('creator', 'Ersteller', 80)):
+            tv.heading(k, text=t)
+            tv.column(k, width=w)
+        sb = ttk.Scrollbar(self, orient='vertical', command=tv.yview)
+        tv.configure(yscrollcommand=sb.set)
+        self.status = tk.StringVar(value='Suchbegriffe eingeben und „Suchen“ drücken. '
+                                         'Token und Ersteller: genau 4 Zeichen, Groß-/Kleinschreibung zählt.')
+        ttk.Label(self, textvariable=self.status, relief='sunken', anchor='w',
+                  padding=(6, 2)).pack(fill='x', side='bottom')
+        tv.pack(side='left', fill='both', expand=True, padx=(8, 0), pady=(0, 8))
+        sb.pack(side='left', fill='y', pady=(0, 8))
+        tv.bind('<Double-1>', self.jump)
+        tv.bind('<Return>', self.jump)
+        self.tv = tv
+        if any((query.text, query.token, query.creator, query.manuf is not None)):
+            self.after(50, self.start)
+
+    def _query(self):
+        manuf = self.v_manuf.get().strip()
+        return SearchQuery(text=self.v_text.get().strip(), token=self.v_token.get().strip(),
+                           creator=self.v_creator.get().strip(),
+                           manuf=int(manuf) if manuf.isdigit() else None, kind=self.v_kind.get())
+
+    def start(self):
+        q = self._query()
+        if not any((q.text, q.token, q.creator, q.manuf is not None)) and q.kind == 'alle':
+            if not messagebox.askyesno(APP_NAME, 'Ohne Suchbegriff werden alle GEOS-Dateien gelistet. '
+                                                 'Trotzdem suchen?', parent=self):
+                return
+        top = self.root_dir if self.v_scope.get() == 'inst' else (self.app.folder or self.root_dir)
+        self._gen += 1
+        gen = self._gen
+        self.tv.delete(*self.tv.get_children())
+        self.results.clear()
+        self._imgs.clear()
+        self._queue = deque()
+        self._count = 0
+        self._found = 0
+        self._done = False
+
+        def worker():
+            for p, h in search(top, q, stop=lambda: gen != self._gen,
+                               progress=lambda n: setattr(self, '_count', n)):
+                self._queue.append((p, h))
+            if gen == self._gen:
+                self._done = True
+
+        threading.Thread(target=worker, daemon=True).start()
+        self.after(100, lambda: self._poll(gen, top))
+
+    def _poll(self, gen, top):
+        if gen != self._gen or not self.winfo_exists():
+            return
+        batch = [self._queue.popleft() for _ in range(min(40, len(self._queue)))]
+        for p, h in batch:
+            self._found += 1
+            tok, cr = h.token.strip('\0 '), h.creator.strip('\0 ')
+            iid = self.tv.insert('', 'end', text='  ' + (h.long_name or os.path.basename(p)), values=(
+                os.path.basename(p), os.path.relpath(os.path.dirname(p), top),
+                f'{h.version}.x · {h.type_name}', f'{tok}/{h.token_manuf}' if tok else '',
+                f'{cr}/{h.creator_manuf}' if cr else ''))
+            self.results[iid] = (p, h)
+            try:
+                owner, _ = self.app.ctx.resolve(p, h)
+                mon = owner.best_icon(prefer=(1, 0, 2, 3)) if owner else None
+                if mon:
+                    ph = ImageTk.PhotoImage(fit_row(moniker_image(mon)))
+                    self._imgs[iid] = ph
+                    self.tv.item(iid, image=ph)
+            except Exception:
+                pass
+        if self._done and not self._queue:
+            self.status.set(f'{self._found} Treffer in {top}. Doppelklick zeigt die Datei im Hauptfenster.')
+            return
+        self.status.set(f'Suche … {self._count} Dateien geprüft, {self._found} Treffer')
+        self.after(60, lambda: self._poll(gen, top))
+
+    def jump(self, event=None):
+        sel = self.tv.selection()
+        if sel and sel[0] in self.results:
+            self.app.open_path(self.results[sel[0]][0])
+            self.app.lift()
 
 
 def main():

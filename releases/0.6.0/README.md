@@ -1,4 +1,4 @@
-# GeoViewPlus 0.5.2
+# GeoViewPlus 0.6.0
 
 Windows-Programm, das GEOS-Dateien von GeoWorks 1.x, GEOS 2.x (Ensemble, NewDeal, Breadbox)
 und FreeGEOS anzeigt: Langnamen, Kopfdaten und Icons.
@@ -21,6 +21,22 @@ Vorbild: GeoView von Rainer Bettsteller (RABE-Soft, 2000).
    Die App meldet ihre Dokument-Tokens in den Daten des Dokument-Controllers.
 3. Sonst aus der Token-Datenbank (`SYSTEM\TOKEN.DB` bzw. `PRIVDATA\TOKEN_DA.000`).
 4. Zuletzt ein Standard-Icon (gAPP, gDAT, FILE, FLDR).
+
+## Suche (Extras → Suchen, Strg+F)
+
+Durchsucht die ganze Installation oder den aktuellen Ordner mit Unterordnern nach
+GEOS-Langname/DOS-Name (Teilwort), Token, Ersteller-Token, Hersteller-ID (passt auf Token
+oder Ersteller) und Art (Programme, Dokumente, Daten). Es werden nur die Dateiköpfe gelesen;
+die Suche läuft im Hintergrund. Doppelklick auf einen Treffer zeigt die Datei im Hauptfenster.
+Beispiele: alle GeoWrite-Dokumente (Ersteller `WP00`), alle eigenen Programme (Hersteller-ID `16506`).
+
+## Details zu Apps und Dokumenten
+
+* **Apps:** interner Name (z. B. `write.app`), Eigenschaften (Prozess, Anwendung, Bibliothek …),
+  Anzahl Ressourcen und Exporte, benutzte Bibliotheken mit Protokollnummer, angelegte Dokumentarten.
+  Knopf „Dokumente dieser App suchen“.
+* **Dokumente:** „Erzeugt von“ mit der App aus der Installation, Knopf „→ Zur App“ und
+  „Ähnliche Dokumente suchen“.
 
 ## Ordner (nur GEOS 2.x / FreeGEOS)
 

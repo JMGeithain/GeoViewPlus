@@ -2,9 +2,9 @@
 
 Windows-Werkzeug zur Untersuchung von PC/GEOS-Dateien – mit besonderem Schwerpunkt auf GeoWorks / PC/GEOS 1.x.
 
-## Aktueller Arbeitsstand: 0.5.2 (25.11.2026)
+## Aktueller Arbeitsstand: 0.6.0 (25.11.2026)
 
-Neuanfang mit vollständigem Quellcode in [releases/0.5.2](releases/0.5.2/README.md):
+Neuanfang mit vollständigem Quellcode in [releases/0.6.0](releases/0.6.0/README.md):
 
 * Dateiköpfe von GeoWorks 1.x und GEOS 2.x bis FreeGEOS (Langname, Typ, Token, Ersteller, Release, Protokoll, Notizen, Copyright).
 * **App-Icons werden direkt aus der App gelesen**, **Dokument-Icons aus der App, die das Dokument erzeugt hat**; erst danach aus der Token-Datenbank (`TOKEN.DB` bzw. `TOKEN_DA.000`), zuletzt ein Standard-Icon.
@@ -12,6 +12,8 @@ Neuanfang mit vollständigem Quellcode in [releases/0.5.2](releases/0.5.2/README
 * Mono-, 16- und 256-Farben-Icons mit Maske; Export als PNG und ICO.
 * Windows-Oberfläche (Tkinter): Ordnerliste mit Icons, Detailansicht wie GeoView von Rainer Bettsteller, Galerie der Icon-Varianten, Token-Datenbank-Browser.
 * **Ordner (GEOS 2.x/FreeGEOS):** Langname und Ordner-Icon aus `@DIRNAME.000`, Verknüpfungen als eigene Einträge mit Ziel, GeoManager-Fensterinfo aus `@DIRECTO.000`. GeoWorks 1.x kennt keine langen Ordnernamen.
+* **Suche** über eine ganze Installation nach Name, Token, Ersteller, Hersteller-ID und Art.
+* **Details:** interner Name, Bibliotheken und Dokumentarten von Apps; bei Dokumenten die erzeugende App mit Sprung dorthin.
 * Regressionstest `test_geoscore.py` gegen eine echte Installation; Originaldateien werden nicht ins Repository übernommen.
 
 ## Arbeitsstand 0.4.4.1 (10.11.2026)
