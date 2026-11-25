@@ -1,4 +1,4 @@
-# GeoViewPlus 0.6.0
+# GeoViewPlus 0.7.0
 
 Windows-Programm, das GEOS-Dateien von GeoWorks 1.x, GEOS 2.x (Ensemble, NewDeal, Breadbox)
 und FreeGEOS anzeigt: Langnamen, Kopfdaten und Icons.
@@ -12,6 +12,7 @@ Vorbild: GeoView von Rainer Bettsteller (RABE-Soft, 2000).
 | `geoscore.py` | Lese-Logik: Dateiköpfe, VM-Dateien, Token-Datenbank, Icons in Apps |
 | `test_geoscore.py` | Regressionstest mit einer echten Installation |
 | `make_exe.bat` | baut `dist\GeoViewPlus.exe` (Python, Pillow, PyInstaller) |
+| `gvpexport.py` | Export (CSV, HTML, Icons der Token-Datenbank) und Explorer-Eintrag |
 | `report.py` | erzeugt eine HTML-Übersicht (Hilfswerkzeug) |
 
 ## Woher die Icons kommen
@@ -29,6 +30,24 @@ GEOS-Langname/DOS-Name (Teilwort), Token, Ersteller-Token, Hersteller-ID (passt 
 oder Ersteller) und Art (Programme, Dokumente, Daten). Es werden nur die Dateiköpfe gelesen;
 die Suche läuft im Hintergrund. Doppelklick auf einen Treffer zeigt die Datei im Hauptfenster.
 Beispiele: alle GeoWrite-Dokumente (Ersteller `WP00`), alle eigenen Programme (Hersteller-ID `16506`).
+
+## Export
+
+* **Datei → Ordnerliste als CSV / HTML exportieren:** alle Einträge des Ordners mit Kopfdaten;
+  CSV mit Semikolon und UTF-8 (öffnet sich in Excel mit Umlauten), HTML mit eingebetteten Icons.
+* **Suchen → Als CSV …:** die Treffer einer Suche.
+* **Extras → Alle Icons der Token-Datenbank exportieren:** je Token eine PNG- und ICO-Datei,
+  auf Wunsch zusätzlich alle Varianten; dazu `index.html` und `index.csv`. Dateinamen enthalten
+  den Token als Hex-Wert, damit `ADBK` und `adbk` unter Windows nicht kollidieren.
+
+## Windows-Bedienung
+
+* **Ziehen und Ablegen:** Ordner oder Datei aus dem Explorer ins Fenster ziehen (braucht das
+  Paket `tkinterdnd2`; `make_exe.bat` fragt danach und baut es ein).
+* **Extras → „Mit GeoViewPlus öffnen“ im Explorer eintragen:** legt für das eigene Benutzerkonto
+  (HKCU) einen Kontextmenü-Eintrag für Ordner und GEOS-Dateien (.GEO, .000–.003, .DB, .VM) an;
+  unter Windows 11 unter „Weitere Optionen anzeigen“. Mit dem zweiten Menüpunkt wieder entfernbar.
+* Start mit Pfad: `GeoViewPlus.exe "C:\...\WORLD"`
 
 ## Details zu Apps und Dokumenten
 
