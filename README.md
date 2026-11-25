@@ -2,9 +2,9 @@
 
 Windows-Werkzeug zur Untersuchung von PC/GEOS-Dateien – mit besonderem Schwerpunkt auf GeoWorks / PC/GEOS 1.x.
 
-## Aktueller Arbeitsstand: 0.7.0 (25.11.2026)
+## Aktueller Arbeitsstand: 0.7.1 (25.11.2026)
 
-Neuanfang mit vollständigem Quellcode in [releases/0.7.0](releases/0.7.0/README.md):
+Neuanfang mit vollständigem Quellcode in [releases/0.7.1](releases/0.7.1/README.md):
 
 * Dateiköpfe von GeoWorks 1.x und GEOS 2.x bis FreeGEOS (Langname, Typ, Token, Ersteller, Release, Protokoll, Notizen, Copyright).
 * **App-Icons werden direkt aus der App gelesen**, **Dokument-Icons aus der App, die das Dokument erzeugt hat**; erst danach aus der Token-Datenbank (`TOKEN.DB` bzw. `TOKEN_DA.000`), zuletzt ein Standard-Icon.

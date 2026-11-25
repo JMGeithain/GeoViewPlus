@@ -1,4 +1,4 @@
-# GeoViewPlus 0.7.0
+# GeoViewPlus 0.7.1
 
 Windows-Programm, das GEOS-Dateien von GeoWorks 1.x, GEOS 2.x (Ensemble, NewDeal, Breadbox)
 und FreeGEOS anzeigt: Langnamen, Kopfdaten und Icons.
@@ -50,6 +50,9 @@ Beispiele: alle GeoWrite-Dokumente (Ersteller `WP00`), alle eigenen Programme (H
 * Start mit Pfad: `GeoViewPlus.exe "C:\...\WORLD"`
 
 ## Details zu Apps und Dokumenten
+
+* **Art der Geode** aus den GeodeAttrs im Dateikopf (1.x +E2h, 2.x +100h): Anwendung, Treiber,
+  Bibliothek oder Bibliothek mit Anwendungsteil (z. B. SPOOL.GEO). Die Suche kann danach filtern.
 
 * **Apps:** interner Name (z. B. `write.app`), Eigenschaften (Prozess, Anwendung, Bibliothek …),
   Anzahl Ressourcen und Exporte, benutzte Bibliotheken mit Protokollnummer, angelegte Dokumentarten.

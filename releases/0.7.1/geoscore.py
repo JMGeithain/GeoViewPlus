@@ -68,6 +68,36 @@ class GeosHeader:
     notice: str
     created: str = ''
     modified: str = ''
+    geode_attrs: int | None = None    # GeodeAttrs of executables (None if unknown)
+
+    @property
+    def geode_kind(self) -> str:
+        """'Treiber', 'Bibliothek', 'Anwendung' or '' for executables."""
+        a = self.geode_attrs
+        if a is None or not self.type_name.startswith('Programm'):
+            return ''
+        if a & 0x2000:
+            return 'Treiber'
+        if a & 0x4000:
+            return 'Bibliothek'
+        if a & 0x0200:
+            return 'Anwendung'
+        return 'Programm'
+
+    @property
+    def is_application(self) -> bool:
+        return self.geode_kind in ('Anwendung', 'Programm') if self.geode_attrs is not None \
+            else self.type_name.startswith('Programm')
+
+    @property
+    def kind_name(self) -> str:
+        """Display name of the file type, e.g. 'Treiber (Geode)'."""
+        k = self.geode_kind
+        if not k:
+            return self.type_name
+        if k == 'Bibliothek' and self.geode_attrs & 0x0200:
+            return 'Bibliothek mit Anwendungsteil (Geode)'
+        return f'{k} (Geode)'
 
     @property
     def release_str(self):
@@ -99,6 +129,7 @@ def parse_header(data: bytes) -> GeosHeader | None:
             notes=geos_text(data[0x44:0xA8]),
             notice=geos_text(data[0xA8:0xC8]),
             created=_fmt_dt(struct.unpack_from('<I', data, 0xC8)[0]),
+            geode_attrs=struct.unpack_from('<H', data, 0x100)[0] if ftype == 1 and len(data) >= 0x102 else None,
         )
     if sig == SIG_V1:
         # GeoWorks 1.x header (0xC8 bytes), offsets verified on 1.2x files
@@ -116,6 +147,7 @@ def parse_header(data: bytes) -> GeosHeader | None:
             creator_manuf=struct.unpack_from('<H', data, 0x1E)[0],
             notes=geos_text(data[0x44:0xA8]),
             notice=geos_text(data[0xA8:0xC8]),
+            geode_attrs=struct.unpack_from('<H', data, 0xE2)[0] if ftype == 0 and len(data) >= 0xE4 else None,
         )
     return None
 
@@ -123,7 +155,7 @@ def parse_header(data: bytes) -> GeosHeader | None:
 def read_header(path: str) -> GeosHeader | None:
     try:
         with open(path, 'rb') as f:
-            return parse_header(f.read(0x100))
+            return parse_header(f.read(0x110))
     except OSError:
         return None
 
@@ -896,6 +928,11 @@ class SearchQuery:
             return False
         if self.kind == 'Programme' and not h.type_name.startswith('Programm'):
             return False
+        if self.kind in ('Anwendungen', 'Treiber', 'Bibliotheken'):
+            want = {'Anwendungen': ('Anwendung', 'Programm'), 'Treiber': ('Treiber',),
+                    'Bibliotheken': ('Bibliothek',)}[self.kind]
+            if h.geode_kind not in want:
+                return False
         if self.kind == 'Dokumente' and not h.type_name.startswith('Dokument'):
             return False
         if self.kind == 'Daten' and not h.type_name.startswith('Daten'):
@@ -919,7 +956,7 @@ def search(root: str, query: SearchQuery, stop=lambda: False, progress=None):
             p = os.path.join(dp, name)
             try:
                 with open(p, 'rb') as f:
-                    h = parse_header(f.read(0x100))
+                    h = parse_header(f.read(0x110))
             except OSError:
                 continue
             if h and query.matches(name, h):

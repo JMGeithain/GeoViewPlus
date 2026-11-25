@@ -29,7 +29,7 @@ def row_for(item, folder_label=''):
                      'Ersteller-Hersteller-ID': ln.creator_manuf if ln.creator.strip('\0 ') else '',
                      'Notizen': 'Ziel: ' + ln.target_text()})
     elif h:
-        base.update({'Typ': h.type_name, 'GEOS-Version': f'{h.version}.x', 'Token': h.token.strip('\0 '),
+        base.update({'Typ': h.kind_name, 'GEOS-Version': f'{h.version}.x', 'Token': h.token.strip('\0 '),
                      'Token-Hersteller-ID': h.token_manuf, 'Ersteller': h.creator.strip('\0 '),
                      'Ersteller-Hersteller-ID': h.creator_manuf if h.creator.strip('\0 ') else '',
                      'Release': h.release_str, 'Protokoll': h.protocol_str, 'Erstellt': h.created,
