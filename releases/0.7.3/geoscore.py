@@ -763,14 +763,18 @@ class DirInfo:
     types: str
     attrs: str
     positions: list          # [(x, y, flags, file_id)]
+    window_valid: bool = True
 
     def describe(self):
-        lines = [f'Fenstergröße: {_ratio(self.win_size[0])} × {_ratio(self.win_size[1])} des Bildschirms',
-                 f'Fensterposition: {_ratio(self.win_pos[0])} von links, {_ratio(self.win_pos[1])} von oben',
-                 f'Ansicht: {self.view}', f'Sortierung: {self.sort}',
-                 f'Angezeigt: {self.types}; {self.attrs}']
-        lines.append(f'Frei verschobene Symbole: {len(self.positions)}' if self.positions
-                     else 'Frei verschobene Symbole: keine')
+        if self.window_valid:
+            lines = [f'Fenstergröße: {_ratio(self.win_size[0])} × {_ratio(self.win_size[1])} des Bildschirms',
+                     f'Fensterposition: {_ratio(self.win_pos[0])} von links, {_ratio(self.win_pos[1])} von oben',
+                     f'Ansicht: {self.view}', f'Sortierung: {self.sort}',
+                     f'Angezeigt: {self.types}; {self.attrs}']
+        else:
+            lines = ['Fensterangaben: nicht gespeichert (keine gültigen Werte in der Datei)']
+        lines.append(f'Gespeicherte Symbol-Positionen: {len(self.positions)}' if self.positions
+                     else 'Gespeicherte Symbol-Positionen: keine (erst ab NewDeal 3.2a / Ensemble 4 mit ISUI)')
         return '\n'.join(lines)
 
 
@@ -791,8 +795,12 @@ def parse_dirinfo(data: bytes) -> DirInfo | None:
     hsize = struct.unpack_from('<H', chunk, 6)[0] if len(chunk) >= 8 else 8
     pos = [struct.unpack_from('<hhBI', chunk, hsize + k * esize) for k in range(count)
            if hsize + (k + 1) * esize <= len(chunk)]
+    def _coord_ok(v):
+        return bool(v & 0x8000) and not v & 0x4000 and ((v >> 10) & 15) <= 1 or v < 0x1000
+    window_valid = (all(_coord_ok(v) for v in ws + wp) and mode in (1, 2, 4, 8)
+                    and types in (1, 2, 4, 8) and 0 < sort < 0x40 and attrs < 0x80)
     return DirInfo(
-        protocol=proto, win_size=ws, win_pos=wp,
+        protocol=proto, win_size=ws, win_pos=wp, window_valid=window_valid,
         view=_flags(mode, [(8, 'nur Namen'), (4, 'Namen und Details'), (2, 'große Symbole'), (1, 'kleine Symbole')]),
         sort=_flags(sort, [(0x20, 'Erstelldatum'), (0x10, 'Name'), (8, 'Erweiterung'), (4, 'Datum'),
                            (2, 'Größe'), (1, 'DOS-Reihenfolge')]),

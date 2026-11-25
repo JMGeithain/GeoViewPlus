@@ -1,10 +1,10 @@
 @echo off
 setlocal EnableExtensions
 cd /d "%~dp0"
-title GeoViewPlus 0.7.2 - EXE erstellen
+title GeoViewPlus 0.7.3 - EXE erstellen
 
 echo ==========================================================
-echo  GeoViewPlus 0.7.2 - Windows-EXE erstellen
+echo  GeoViewPlus 0.7.3 - Windows-EXE erstellen
 echo ==========================================================
 echo.
 echo Suche eine vorhandene Python-Installation ...
