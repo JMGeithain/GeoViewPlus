@@ -28,10 +28,19 @@ from geoscore import (TokenDB, parse_header, moniker_rgba, classify_geode_icons,
                       find_token_db, SIG_V1, read_dirname, read_dirinfo, match_positions,
                       find_case, STANDARD_PATHS, geode_info, SearchQuery, search)
 
+import gvpexport
+
+try:                                   # optional: drag and drop from Explorer
+    from tkinterdnd2 import TkinterDnD, DND_FILES
+    BaseTk = TkinterDnD.Tk
+except Exception:                      # pragma: no cover
+    TkinterDnD = DND_FILES = None
+    BaseTk = tk.Tk
+
 ADMIN_FILES = ('@DIRNAME.000', '@DIRECTO.000')
 
 APP_NAME = 'GeoViewPlus'
-APP_VERSION = '0.6.0'
+APP_VERSION = '0.7.0'
 LIST_ICON_H = 32           # row height in the file list
 FALLBACK = {'Programm (Geode)': 'gAPP', 'Dokument (VM-Datei)': 'gDAT',
             'Daten-Datei': 'FILE', 'Verzeichnis': 'FLDR'}
@@ -280,7 +289,7 @@ class GeosContext:
 # ---------------------------------------------------------------------------
 
 
-class GeoViewPlus(tk.Tk):
+class GeoViewPlus(BaseTk):
     COLUMNS = (('dos', 'DOS-Name', 110), ('type', 'Typ', 150), ('token', 'Token', 80),
                ('creator', 'Ersteller', 80), ('size', 'Größe', 90), ('mtime', 'Geändert', 115))
 
@@ -303,6 +312,12 @@ class GeoViewPlus(tk.Tk):
         self.show_admin = tk.BooleanVar(value=False)
         self._build_menu()
         self._build_ui()
+        if DND_FILES:
+            try:
+                self.drop_target_register(DND_FILES)
+                self.dnd_bind('<<Drop>>', self._on_drop)
+            except Exception:
+                pass
         if start:
             self.after(50, lambda: self.open_path(start))
 
@@ -314,6 +329,9 @@ class GeoViewPlus(tk.Tk):
         f.add_command(label='Datei öffnen …', command=self.ask_file)
         f.add_separator()
         f.add_command(label='Token-Datenbank wählen …', command=self.ask_tokendb)
+        f.add_separator()
+        f.add_command(label='Ordnerliste als CSV exportieren …', command=lambda: self.export_list('csv'))
+        f.add_command(label='Ordnerliste als HTML exportieren …', command=lambda: self.export_list('html'))
         f.add_separator()
         f.add_command(label='Beenden', command=self.destroy)
         m.add_cascade(label='Datei', menu=f)
@@ -327,6 +345,12 @@ class GeoViewPlus(tk.Tk):
         x = tk.Menu(m, tearoff=False)
         x.add_command(label='Suchen …', accelerator='Strg+F', command=self.open_search)
         x.add_command(label='Token-Datenbank durchsehen …', command=self.show_tokendb)
+        x.add_command(label='Alle Icons der Token-Datenbank exportieren …', command=self.export_tokendb)
+        if sys.platform == 'win32':
+            x.add_separator()
+            x.add_command(label='„Mit GeoViewPlus öffnen“ im Explorer eintragen', command=self.register_shell)
+            x.add_command(label='„Mit GeoViewPlus öffnen“ aus dem Explorer entfernen',
+                          command=self.unregister_shell)
         m.add_cascade(label='Extras', menu=x)
         h = tk.Menu(m, tearoff=False)
         h.add_command(label=f'Über {APP_NAME} …', command=self.show_about)
@@ -625,6 +649,11 @@ class GeoViewPlus(tk.Tk):
 
     def _load_icons(self):
         """Resolve icons in small batches so the window stays responsive."""
+        self._load_icons_batch()
+        if self._pending:
+            self.after(1, self._load_icons)
+
+    def _load_icons_batch(self):
         batch, self._pending = self._pending[:15], self._pending[15:]
         for iid in batch:
             it = self.items.get(iid)
@@ -658,8 +687,6 @@ class GeoViewPlus(tk.Tk):
             self.tree.item(iid, image=photo)
             if iid in self.tree.selection():
                 self.show_detail()
-        if self._pending:
-            self.after(1, self._load_icons)
 
     def sort_by(self, key):
         rev = getattr(self, '_sort', (None, False))
@@ -907,14 +934,92 @@ class GeoViewPlus(tk.Tk):
         if kind == 'png':
             img.save(path)
         else:
-            side = max(img.width, img.height)
-            sq = Image.new('RGBA', (side, side), (0, 0, 0, 0))
-            sq.paste(img, ((side - img.width) // 2, (side - img.height) // 2))
-            sizes = [(s, s) for s in (16, 32, 48, 64) if s <= max(side, 16)] or [(side, side)]
-            sq.save(path, sizes=sizes)
+            gvpexport.save_ico(img, path)
         self.status.set(f'Icon gespeichert: {path}')
 
     # ---------------- token database browser ----------------
+    # ---------------- drag and drop, export, Explorer ----------------
+    def _on_drop(self, event):
+        paths = self.tk.splitlist(event.data)
+        if paths:
+            self.open_path(paths[0])
+
+    def _ensure_icons(self):
+        """Resolve all pending icons now (used before exporting)."""
+        while self._pending:
+            self._load_icons_batch()
+
+    def _item_image(self, it):
+        owner = it.get('owner')
+        mon = owner.best_icon(prefer=(1, 0, 2, 3)) if owner else None
+        return moniker_image(mon) if mon else it.get('img')
+
+    def export_list(self, kind):
+        if not self.folder:
+            messagebox.showinfo(APP_NAME, 'Bitte zuerst einen Ordner öffnen.')
+            return
+        name = os.path.basename(self.folder.rstrip('\\/')) or 'GeoViewPlus'
+        path = filedialog.asksaveasfilename(title='Ordnerliste exportieren', initialfile=f'{name}.{kind}',
+                                            defaultextension='.' + kind,
+                                            filetypes=[(kind.upper(), '*.' + kind)])
+        if not path:
+            return
+        self._ensure_icons()
+        items = [self.items[i] for i in self.tree.get_children()]
+        rows = [gvpexport.row_for(it) for it in items]
+        if kind == 'csv':
+            gvpexport.write_csv(path, rows)
+        else:
+            gvpexport.write_html(path, f'GEOS-Ordner {self.folder}',
+                                 f'{len(items)} Einträge · exportiert mit {APP_NAME} {APP_VERSION}',
+                                 [(self._item_image(it), r) for it, r in zip(items, rows)])
+        self.status.set(f'Exportiert: {path}')
+
+    def export_tokendb(self):
+        db = self.ctx.tokendb
+        if not db:
+            messagebox.showinfo(APP_NAME, 'Keine Token-Datenbank geladen.')
+            return
+        folder = filedialog.askdirectory(title='Zielordner für die Icons wählen (am besten ein leerer Ordner)')
+        if not folder:
+            return
+        all_var = messagebox.askyesno(APP_NAME, 'Zusätzlich alle Icon-Varianten (Größen, Farbstufen) '
+                                      'als eigene PNG-Dateien speichern?')
+        self.config(cursor='watch')
+
+        def prog(k, n):
+            self.status.set(f'Exportiere Icons … {k} von {n}')
+            self.update_idletasks()
+        try:
+            n = gvpexport.export_tokendb(db, folder, moniker_image, ico=True, all_variants=all_var,
+                                         progress=prog)
+        finally:
+            self.config(cursor='')
+        self.status.set(f'{n} Icons exportiert nach {folder}')
+        messagebox.showinfo(APP_NAME, f'{n} Icons als PNG und ICO gespeichert.\n'
+                                      f'Übersicht: index.html und index.csv in\n{folder}')
+
+    def register_shell(self):
+        cmd, _ = gvpexport.launch_command()
+        if not messagebox.askyesno(APP_NAME, 'Im Kontextmenü des Windows-Explorers wird für Ordner und '
+                                   'GEOS-Dateien (.GEO, .000–.003, .DB, .VM) der Eintrag „Mit GeoViewPlus '
+                                   f'öffnen“ angelegt (nur für dein Benutzerkonto).\n\nBefehl: {cmd}\n\n'
+                                   'Fortfahren?'):
+            return
+        try:
+            gvpexport.register_context_menu()
+            messagebox.showinfo(APP_NAME, 'Eingetragen. Unter Windows 11 steht der Eintrag unter '
+                                '„Weitere Optionen anzeigen“.')
+        except Exception as ex:
+            messagebox.showerror(APP_NAME, f'Eintragen fehlgeschlagen:\n{ex}')
+
+    def unregister_shell(self):
+        try:
+            gvpexport.unregister_context_menu()
+            messagebox.showinfo(APP_NAME, 'Der Eintrag wurde aus dem Explorer entfernt.')
+        except Exception as ex:
+            messagebox.showerror(APP_NAME, f'Entfernen fehlgeschlagen:\n{ex}')
+
     def show_tokendb(self):
         db = self.ctx.tokendb
         if not db:
@@ -1040,6 +1145,8 @@ class SearchWindow(tk.Toplevel):
                         value='folder').pack(side='left', padx=(10, 0))
         self.btn = ttk.Button(frm, text='Suchen', command=self.start)
         self.btn.grid(row=0, column=8, rowspan=2, padx=(12, 0), sticky='ns')
+        ttk.Button(frm, text='Als CSV …', command=self.export_csv).grid(row=0, column=9, rowspan=2,
+                                                                       padx=(6, 0), sticky='ns')
         tv = ttk.Treeview(self, style='Files.Treeview',
                           columns=('dos', 'folder', 'type', 'token', 'creator'))
         for k, t, w in (('#0', 'GEOS-Name', 260), ('dos', 'DOS-Name', 110), ('folder', 'Ordner', 230),
@@ -1119,6 +1226,25 @@ class SearchWindow(tk.Toplevel):
             return
         self.status.set(f'Suche … {self._count} Dateien geprüft, {self._found} Treffer')
         self.after(60, lambda: self._poll(gen, top))
+
+    def export_csv(self):
+        if not self.results:
+            messagebox.showinfo(APP_NAME, 'Keine Treffer zum Exportieren.', parent=self)
+            return
+        path = filedialog.asksaveasfilename(parent=self, title='Treffer als CSV speichern',
+                                            initialfile='GeoViewPlus_Suche.csv', defaultextension='.csv',
+                                            filetypes=[('CSV', '*.csv')])
+        if not path:
+            return
+        rows = []
+        for iid in self.tv.get_children():
+            p, h = self.results[iid]
+            st = os.stat(p)
+            it = dict(long=h.long_name or os.path.basename(p), name=os.path.basename(p), header=h,
+                      size=st.st_size, mtime=st.st_mtime)
+            rows.append(gvpexport.row_for(it, os.path.dirname(p)))
+        gvpexport.write_csv(path, rows)
+        self.status.set(f'{len(rows)} Treffer gespeichert: {path}')
 
     def jump(self, event=None):
         sel = self.tv.selection()
