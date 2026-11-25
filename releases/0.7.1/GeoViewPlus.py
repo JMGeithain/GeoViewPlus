@@ -40,7 +40,7 @@ except Exception:                      # pragma: no cover
 ADMIN_FILES = ('@DIRNAME.000', '@DIRECTO.000')
 
 APP_NAME = 'GeoViewPlus'
-APP_VERSION = '0.7.0'
+APP_VERSION = '0.7.1'
 LIST_ICON_H = 32           # row height in the file list
 FALLBACK = {'Programm (Geode)': 'gAPP', 'Dokument (VM-Datei)': 'gDAT',
             'Daten-Datei': 'FILE', 'Verzeichnis': 'FLDR'}
@@ -95,7 +95,7 @@ def install_kind(folder):
     return 'GeoWorks 1.x' if read_head(db, 4) == SIG_V1 else 'GEOS 2.x / FreeGEOS'
 
 
-def read_head(path, n=0x100):
+def read_head(path, n=0x110):
     try:
         with open(path, 'rb') as f:
             return f.read(n)
@@ -220,7 +220,7 @@ class GeosContext:
         if h.type_name.startswith('Programm'):
             gi = self.geode_icons(path)
             if gi and gi.app and gi.app.best_icon():
-                return gi.app, 'aus der App selbst'
+                return gi.app, 'aus der App selbst' if h.is_application else 'aus der Datei selbst'
         elif h.creator.strip('\0 '):
             app = self.apps.get((h.creator, h.creator_manuf)) or next(
                 (p for (t, m), p in self.apps.items() if t == h.creator), None)
@@ -542,7 +542,7 @@ class GeoViewPlus(BaseTk):
         self.status_extra = ''
         # Documents may now get their icon from the creating app
         for iid, it in self.items.items():
-            if not it['isdir'] and it.get('header') and it.get('source') != 'aus der App selbst':
+            if not it['isdir'] and it.get('header') and it.get('source') not in ('aus der App selbst', 'aus der Datei selbst'):
                 it.pop('source', None)
                 if iid not in self._pending:
                     self._pending.append(iid)
@@ -609,7 +609,7 @@ class GeoViewPlus(BaseTk):
             if h:
                 n_geos += 1
                 tok = h.token.strip('\0 ')
-                vals = (n, f'{h.version}.x · {h.type_name}', f'{tok}/{h.token_manuf}' if tok else '',
+                vals = (n, f'{h.version}.x · {h.kind_name}', f'{tok}/{h.token_manuf}' if tok else '',
                         f'{h.creator.strip(chr(0))}/{h.creator_manuf}' if h.creator.strip('\0 ') else '',
                         fmt_size(st.st_size).replace(' Bytes', ''), fmt_mtime(st.st_mtime))
                 text = h.long_name or n
@@ -778,7 +778,7 @@ class GeoViewPlus(BaseTk):
                             + (f'Auf diesem Rechner: {target}\n(Doppelklick öffnet das Ziel)' if target else
                                'Das Ziel liegt außerhalb der Installation (z. B. Laufwerk im Emulator).'))
         elif h:
-            f['Datei-Typ'].configure(text=h.type_name)
+            f['Datei-Typ'].configure(text=h.kind_name)
             f['GEOS-Version'].configure(text='GeoWorks 1.x' if h.version == 1 else 'GEOS 2.x / FreeGEOS')
             tok = h.token.strip('\0 ')
             f['Token'].configure(text=f'„{tok}“, Hersteller-ID {h.token_manuf}' if tok else '–')
@@ -832,9 +832,10 @@ class GeoViewPlus(BaseTk):
                 f['Eigenschaften'].configure(text=f'{gi.attr_text()} · {gi.resources} Ressourcen, '
                                                   f'{gi.exports} Exporte')
                 f['Bibliotheken'].configure(text=gi.libs_text())
-                f['Dokumentarten'].configure(text=', '.join(f'„{t}“/{m}' for t, m in gi.document_tokens)
-                                             or 'keine')
-            if tok:
+                if h.is_application:
+                    f['Dokumentarten'].configure(text=', '.join(f'„{t}“/{m}' for t, m in gi.document_tokens)
+                                                 or 'keine')
+            if tok and h.is_application and gi and gi.document_tokens:
                 self._button('Dokumente dieser App suchen …',
                              lambda: self.open_search(SearchQuery(creator=tok, kind='Dokumente')))
         elif creator:
@@ -1105,7 +1106,7 @@ class GeoViewPlus(BaseTk):
 class SearchWindow(tk.Toplevel):
     """Search GEOS files of the whole installation by name, token, creator, ID."""
 
-    KINDS = ('alle', 'Programme', 'Dokumente', 'Daten')
+    KINDS = ('alle', 'Anwendungen', 'Treiber', 'Bibliotheken', 'Programme', 'Dokumente', 'Daten')
 
     def __init__(self, app, root, query):
         super().__init__(app)
@@ -1209,7 +1210,7 @@ class SearchWindow(tk.Toplevel):
             tok, cr = h.token.strip('\0 '), h.creator.strip('\0 ')
             iid = self.tv.insert('', 'end', text='  ' + (h.long_name or os.path.basename(p)), values=(
                 os.path.basename(p), os.path.relpath(os.path.dirname(p), top),
-                f'{h.version}.x · {h.type_name}', f'{tok}/{h.token_manuf}' if tok else '',
+                f'{h.version}.x · {h.kind_name}', f'{tok}/{h.token_manuf}' if tok else '',
                 f'{cr}/{h.creator_manuf}' if cr else ''))
             self.results[iid] = (p, h)
             try:
