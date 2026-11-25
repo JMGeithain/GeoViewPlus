@@ -544,7 +544,8 @@ class GeodeIconList:
 
     @property
     def is_tool(self):
-        return all(((m.entry_type >> 8) & 15) == 4 for m in self.monikers if m.is_graphic)
+        g = [m for m in self.monikers if m.is_graphic]
+        return bool(g) and all(((m.entry_type >> 8) & 15) == 4 for m in g)
 
     best_icon = TokenEntry.best_icon
     name = TokenEntry.name
@@ -624,7 +625,10 @@ def geode_document_tokens(d: bytes):
         app_tok = d[0x14:0x1A]
         pat = re.compile(rb'\x18\xe7(.{4})(..)' + re.escape(app_tok), re.S)
     else:
-        pat = re.compile(rb'\x07\x6c\x0a\x00(.{4})(..)', re.S)
+        # GenDocumentControl instance data (seen in GeoWorks 2.01 and FreeGEOS:
+        # GeoWrite, GeoDraw, GeoPlaner, Album, Adressbuch, Localize ...) and
+        # a vardata entry that some applications use in addition
+        pat = re.compile(rb'(?:\x04\xc0\x00\x02\x00\x00\x00\x00\x00|\x07\x6c\x0a\x00)(.{4})(..)', re.S)
     for m in pat.finditer(d):
         tok, manuf = m.group(1), struct.unpack('<H', m.group(2))[0]
         if all(32 <= c < 127 for c in tok):

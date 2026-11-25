@@ -1,7 +1,7 @@
 """Regression test for geoscore with a real GeoWorks 1.x and/or FreeGEOS installation.
 
 Usage:
-    python test_geoscore.py <GeoWorks-1.x folder> [<FreeGEOS folder>]
+    python test_geoscore.py <GeoWorks-1.x folder> [<FreeGEOS folder>] [<GeoWorks-2.x folder>]
 
 Example (Windows):
     python test_geoscore.py "%APPDATA%\\freeGEOS\\GEOWORKS" "%APPDATA%\\freeGEOS\\FreeGEOS.281"
@@ -78,5 +78,9 @@ if __name__ == '__main__':
                                   ('GEOPLAN.GEO', 'PLNR', 'plnr'), ('CALC.GEO', 'CALc', None)])
     if len(sys.argv) > 2:
         test_install(sys.argv[2], 2, [('write.geo', 'WP00', 'WDAT'), ('draw.geo', 'DP00', 'DDAT')])
+    if len(sys.argv) > 3:
+        test_install(sys.argv[3], 2, [('WRITE.GEO', 'WP00', 'WDAT'), ('GEOCALC.GEO', 'GCAL', 'GCDa'),
+                                      ('GEOPLAN.GEO', 'PLNR', 'plnr'), ('SCRAPBK.GEO', 'Scrp', 'scbk'),
+                                      ('ICON.GEO', 'ICON', 'IDOC')])
     print(f'\n{"ALLE TESTS BESTANDEN" if not failures else f"{len(failures)} FEHLER"}')
     sys.exit(1 if failures else 0)
