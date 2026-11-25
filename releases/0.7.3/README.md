@@ -1,4 +1,4 @@
-# GeoViewPlus 0.7.2
+# GeoViewPlus 0.7.3
 
 Windows-Programm, das GEOS-Dateien von GeoWorks 1.x, GEOS 2.x (Ensemble, NewDeal, Breadbox)
 und FreeGEOS anzeigt: Langnamen, Kopfdaten und Icons.
@@ -75,8 +75,13 @@ GeoWorks 1.x kennt keine langen Ordnernamen. Ab GEOS 2.x liegen in Ordnern zwei 
   in Prozent des Bildschirms, Ansicht, Sortierung, angezeigte Dateitypen und die Positionen frei
   verschobener Symbole. Die Positionen hängen an einer FileID (Hash `id = id*33 + Zeichen` über
   den DOS-Pfad im Emulator); GeoViewPlus ordnet sie den Dateien zu, indem es den unbekannten
-  Ordnerpfad-Anteil aus den Einträgen zurückrechnet. *An echten Dateien mit verschobenen Symbolen
-  noch nicht geprüft.*
+  Ordnerpfad-Anteil aus den Einträgen zurückrechnet.
+  Symbol-Positionen speichert GeoManager erst ab **NewDeal Office 3.2a / Breadbox Ensemble 4 mit ISUI**
+  (GeoWorks 2.01 mit Motif kann Symbole nicht frei verschieben). Dann stehen die Positionen *aller*
+  Symbole des Ordners in der Datei. Geprüft an Ensemble 4.13: 70 von 72 Positionen zugeordnet, die
+  zwei verschobenen Programme (Token PCX Tool, Voreinstellungen) richtig unten rechts.
+  In dieser Fassung waren die Fensterangaben nicht gültig gesetzt; GeoViewPlus erkennt das und
+  zeigt dann „nicht gespeichert“ statt Fantasiewerten.
 
 ## Formate (geprüft an GeoWorks 1.28, GeoWorks 2.01 und FreeGEOS 2.81)
 

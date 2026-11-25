@@ -40,7 +40,7 @@ except Exception:                      # pragma: no cover
 ADMIN_FILES = ('@DIRNAME.000', '@DIRECTO.000')
 
 APP_NAME = 'GeoViewPlus'
-APP_VERSION = '0.7.2'
+APP_VERSION = '0.7.3'
 LIST_ICON_H = 32           # row height in the file list
 FALLBACK = {'Programm (Geode)': 'gAPP', 'Dokument (VM-Datei)': 'gDAT',
             'Daten-Datei': 'FILE', 'Verzeichnis': 'FLDR'}
